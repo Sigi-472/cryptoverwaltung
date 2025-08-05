@@ -58,7 +58,7 @@ sigils = [
 ]
 
 # Jetzt die importierten Module verwenden
-from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 import requests
 from flask_cors import CORS
 from sqlalchemy import create_engine, Column, Integer, Float, String, Date, Boolean, ForeignKey, Table
@@ -68,7 +68,7 @@ from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, DetachedInstanceError
 
 
 app = Flask(__name__)
@@ -148,6 +148,38 @@ def erstelle_datenbank(pfad='sqlite:///krypto_portfolio.db'):
     print("Datenbank und Tabellen wurden erstellt.")
 
 # === ROUTEN ===
+
+@app.context_processor
+def inject_data():
+    session = Session()
+
+    is_authenticated = current_user.is_authenticated
+    is_admin = False
+    user = None
+
+    if is_authenticated:
+        try:
+            # User nochmal frisch aus DB laden mit Rollen eager
+            user = session.query(User).options(
+                joinedload(User.roles)
+            ).filter(User.id == current_user.id).one_or_none()
+
+            if user is not None:
+                is_admin = any(role.name == 'admin' for role in user.roles)
+            else:
+                print(f"User mit ID {current_user.id} nicht in DB gefunden")
+        except DetachedInstanceError:
+            print("DetachedInstanceError: current_user is not bound to session")
+        except Exception as e:
+            print(f"Unbekannter Fehler beim Laden des Users: {e}")
+
+    session.close()
+
+    return dict(
+        is_authenticated=is_authenticated,
+        is_admin=is_admin,
+        user=user
+    )
 
 @app.route('/')
 @login_required
