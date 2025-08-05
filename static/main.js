@@ -24,201 +24,26 @@ async function fetchPrice(coin) {
   }
 }
 
-fetchPrice("BTC");
-fetchPrice("SOL");
-fetchPrice("ETH");
-fetchPrice("XRP");
-fetchPrice("ADA");
-fetchPrice("DOT");
-fetchPrice("DOGE");
-fetchPrice("MATIC");
-fetchPrice("TRX");
-fetchPrice("LTC");
-fetchPrice("LINK");
-fetchPrice("AVAX");
-fetchPrice("UNI");
-fetchPrice("ONDO");
-fetchPrice("AAVE");
-fetchPrice("XLM");
-fetchPrice("FIL");
-fetchPrice("ATOM");
-fetchPrice("NEAR");
-fetchPrice("SAND");
-fetchPrice("APE");
-fetchPrice("CHZ");
-fetchPrice("MANA");
-fetchPrice("XTZ");
-fetchPrice("KSM");
-fetchPrice("SUI");
-fetchPrice("ALGO");
-fetchPrice("SHIB");
-fetchPrice("VET");
-fetchPrice("ZRX");
-fetchPrice("ZETACHAIN");
-fetchPrice("DEGEN");
-fetchPrice("ALEO");
-fetchPrice("BCH");
-fetchPrice("BNB");
-fetchPrice("USDT");
-fetchPrice("XMR");
-
-
-
+fetch('/api/get_sigils')
+  .then(response => response.json())
+  .then(sigils => {
+    sigils.forEach(sigil => {
+      fetchPrice(sigil);
+    });
+  })
+  .catch(error => {
+    console.error('Fehler beim Abrufen der Sigils:', error);
+  });
 
 
 setInterval(() => fetchPrice("BTC"), 10000);
 
+
 rows.forEach((row) => {
   const coin = row.querySelector("td:first-child").textContent.trim();
-  if (coin === "BTC") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["BTC"];
-}
-if (coin === "SOL") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["SOL"];
-}
-if (coin === "ETH") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["ETH"];
-}
-if (coin === "XRP") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["XRP"];
-}
-if (coin === "ADA") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["ADA"];
-}
-if (coin === "DOT") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["DOT"];
-}
-if (coin === "DOGE") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["DOGE"];
-}
-if (coin === "MATIC") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["MATIC"];
-}
-if (coin === "TRX") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["TRX"];
-}
-if (coin === "LTC") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["LTC"];
-}
-if (coin === "LINK") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["LINK"];
-}
-if (coin === "AVAX") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["AVAX"];
-}
-if (coin === "UNI") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["UNI"];
-}
-if (coin === "ONDO") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["ONDO"];
-}
-if (coin === "AAVE") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["AAVE"];
-}
-if (coin === "XLM") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["XLM"];
-}
-if (coin === "FIL") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["FIL"];
-}
-if (coin === "ATOM") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["ATOM"];
-}
-if (coin === "NEAR") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["NEAR"];
-}
-if (coin === "SAND") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["SAND"];
-}
-if (coin === "APE") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["APE"];
-}
-if (coin === "CHZ") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["CHZ"];
-}
-if (coin === "MANA") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["MANA"];
-}
-if (coin === "XTZ") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["XTZ"];
-}
-if (coin === "KSM") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["KSM"];
-}
-if (coin === "SUI") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["SUI"];
-}
-if (coin === "ALGO") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["ALGO"];
-}
-if (coin === "SHIB") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["SHIB"];
-}
-if (coin === "VET") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["VET"];
-}
-if (coin === "ZRX") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["ZRX"];
-}
-if (coin === "ZETACHAIN") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["ZETACHAIN"];
-}
-if (coin === "DEGEN") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["DEGEN"];
-}
-if (coin === "ALEO") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["ALEO"];
-}
-if (coin === "BCH") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["BCH"];
-}
-if (coin === "BNB") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["BNB"];
-}
-if (coin === "USDT") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["USDT"];
-}
-if (coin === "XMR") {
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices["XMR"];
-}
 
+  const kursEURZelle = row.querySelectorAll("td")[5];
+  kursEURZelle.textContent = currentPrices[coin];
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

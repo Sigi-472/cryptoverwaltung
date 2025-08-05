@@ -53,7 +53,6 @@ sigils = [
     'BCH',
     'BNB',
     'USDT',
-    'XMR'
 ]
 
 # Jetzt die importierten Module verwenden
@@ -200,7 +199,7 @@ def api_price():
     api_urls = {}
 
     for coin_sigil in sigils:
-        api_urls[coin_sigil] = f'https://api.coinbase.com/v2/prices/{coin_sigil}-EUR/spot'
+        api_urls[coin_sigil] = f'https://api.coinbase.com/v2/prices/{coin_sigil}-USD/spot'
 
     if coin not in api_urls:
         return jsonify({'error': f'Preis für {coin} nicht verfügbar'}), 404
