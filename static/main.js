@@ -38,12 +38,14 @@ fetch('/api/get_sigils')
 
 setInterval(() => fetchPrice("BTC"), 10000);
 
-
 rows.forEach((row) => {
   const coin = row.querySelector("td:first-child").textContent.trim();
 
-  const kursEURZelle = row.querySelectorAll("td")[5];
-  kursEURZelle.textContent = currentPrices[coin];
+  const r = row.querySelectorAll("td");
+  if (r.length >= 5) {
+    const kursEURZelle = r[5];
+    kursEURZelle.textContent = currentPrices[coin];
+  }
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,66 +69,75 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveBtn = document.getElementById("saveBtn");
   const saveSellBtn = document.getElementById("saveSellBtn");
 
-  buyBtn.addEventListener("click", () => {
-    form.style.display = "block";
-    sellForm.style.display = "none";
-  });
+  if (buyBtn) {
+    buyBtn.addEventListener("click", () => {
+      form.style.display = "block";
+      sellForm.style.display = "none";
+    });
+  }
 
-  sellBtn.addEventListener("click", () => {
-    sellForm.style.display = "block";
-    form.style.display = "none";
-  });
-
-  cancelBtn.addEventListener("click", () => {
-    form.reset(); // Formular leeren
-    form.style.display = "none"; // Formular verstecken
-  });
-
-  cancelSellBtn.addEventListener("click", () => {
-    sellForm.reset();
-    sellForm.style.display = "none";
-  });
-
-  saveBtn.addEventListener("click", async (event) => {
-    event.preventDefault();
-
-    const daten = {
-      coin: document.getElementById("coinSelect").value,
-      im_besitz: parseFloat(document.getElementById("amountInput").value),
-      durchschnittseinkaufspreis: parseFloat(
-        document.getElementById("priceInput").value
-      ),
-      kaufdatum: document.getElementById("buyDateInput").value,
-    };
-
-    try {
-      const res = await fetch("/api/kauf-und-portfolio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(daten),
-      });
-
-      console.log("Status:", res.status);
-      const text = await res.text();
-      console.log("Response Text:", text);
-
-      if (!res.ok) throw new Error(`Server Fehler: ${text}`);
-
-      // Versuche JSON zu parsen (falls du das brauchst)
-      try {
-        const json = JSON.parse(text);
-        console.log("Response JSON:", json);
-      } catch {
-        console.warn("Antwort kein JSON");
-      }
-
-      form.reset();
+  if (sellBtn) {
+    sellBtn.addEventListener("click", () => {
+      sellForm.style.display = "block";
       form.style.display = "none";
-      await updatePortfolio();
-    } catch (error) {
-      alert("❌ Fehler beim Kauf: " + error.message);
-    }
-  });
+    });
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
+      form.reset(); // Formular leeren
+      form.style.display = "none"; // Formular verstecken
+    });
+  }
+
+  if (cancelSellBtn) {
+    cancelSellBtn.addEventListener("click", () => {
+      sellForm.reset();
+      sellForm.style.display = "none";
+    });
+  }
+  if (saveSellBtn) {
+    saveBtn.addEventListener("click", async (event) => {
+      event.preventDefault();
+
+      const daten = {
+        coin: document.getElementById("coinSelect").value,
+        im_besitz: parseFloat(document.getElementById("amountInput").value),
+        durchschnittseinkaufspreis: parseFloat(
+          document.getElementById("priceInput").value
+        ),
+        kaufdatum: document.getElementById("buyDateInput").value,
+      };
+
+      try {
+        const res = await fetch("/api/kauf-und-portfolio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(daten),
+        });
+
+        console.log("Status:", res.status);
+        const text = await res.text();
+        console.log("Response Text:", text);
+
+        if (!res.ok) throw new Error(`Server Fehler: ${text}`);
+
+        // Versuche JSON zu parsen (falls du das brauchst)
+        try {
+          const json = JSON.parse(text);
+          console.log("Response JSON:", json);
+        } catch {
+          console.warn("Antwort kein JSON");
+        }
+
+        form.reset();
+        form.style.display = "none";
+        await updatePortfolio();
+      } catch (error) {
+        alert("❌ Fehler beim Kauf: " + error.message);
+      }
+    });
+  }
 });
 
 async function updatePrices() {
@@ -179,7 +190,7 @@ function updatePriceInDOM(coin, price) {
       const kursUSD = price / eurToUsd;
       tds[5].textContent = kursUSD.toFixed(2) + " €";
 
-      console.log ("USD Kurs aktualisieren" + price);
+      console.log("USD Kurs aktualisieren" + price);
       tds[6].textContent = price.toFixed(2) + " $";
 
       const durchschnittspreis = parseFloat(tds[2].textContent.replace(",", "."));
@@ -201,9 +212,9 @@ function updatePriceInDOM(coin, price) {
       } else {
         tds[4].style.color = "black";
       }
-    
 
-      
+
+
     }
   });
 }
