@@ -14,6 +14,7 @@ install_if_missing('flask')
 install_if_missing('requests')
 install_if_missing('sqlalchemy')
 install_if_missing('flask-cors')
+install_if_missing('flask-login')
 
 sigils = [
     'BTC',
@@ -59,12 +60,27 @@ sigils = [
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import requests
 from flask_cors import CORS
-from sqlalchemy import create_engine, Column, Integer, Float, String, Date
+from sqlalchemy import create_engine, Column, Integer, Float, String, Date, Boolean, ForeignKey, Table
+from sqlalchemy.orm import relationship, joinedload
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user, login_manager
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+
 
 app = Flask(__name__)
 CORS(app)  # Cross-Origin-Freigabe
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'  # Weiterleitung zur Login-Seite, wenn nicht eingeloggt
+
+app.config['SECRET_KEY'] = "SKLJDASKDLFHNSDKJFL;:HWNEJKRWJERF"
+
+login_manager.login_view = 'login'
+login_manager.login_message = "Bitte melde dich an, um fortzufahren."
+
 
 Base = declarative_base()
 engine = create_engine('sqlite:///krypto_portfolio.db', echo=False)
@@ -91,6 +107,37 @@ class KaufEintrag(Base):
     preis = Column(Float, nullable=False)
     kaufdatum = Column(Date, nullable=False)
 
+class User(UserMixin, Base):
+    __tablename__ = "user"
+    id = Column(Integer, primary_key=True)
+    username = Column(String(150), unique=True)
+    password = Column(String(180))
+    role = Column(String(50))
+    is_active = Column(Boolean, default=False)
+
+    user_roles = Table(
+        'user_roles', Base.metadata,
+        Column('user_id', Integer, ForeignKey('user.id')),
+        Column('role_id', Integer, ForeignKey('role.id'))
+    )
+
+    roles = relationship(
+        "Role",
+        secondary=user_roles,
+        back_populates="users"
+    )
+
+class Role(Base):
+    __tablename__ = 'role'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), unique=True)
+
+    users = relationship(
+        "User",
+        secondary=User.user_roles,  # oder: 'user_roles' falls global definiert
+        back_populates="roles"
+    )
+
 # === HILFSFUNKTIONEN ===
 
 def erstelle_datenbank(pfad='sqlite:///krypto_portfolio.db'):
@@ -101,6 +148,7 @@ def erstelle_datenbank(pfad='sqlite:///krypto_portfolio.db'):
 # === ROUTEN ===
 
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
@@ -372,8 +420,296 @@ def add_verkauf():
         session.close()
         return jsonify({'error': str(e)}), 500
 
+def is_admin_user(session=None) -> bool:
+    if session is None:
+        session = Session()
+
+    if not current_user.is_authenticated:
+        session.close()
+        return False
+
+    try:
+        user = session.query(User).options(joinedload(User.roles)).filter_by(id=current_user.id).one_or_none()
+        if user is None:
+            print(f"is_admin_user: user {current_user.id} not found")
+            session.close()
+            return False
+
+        roles = [role.name for role in user.roles]
+        session.close()
+        return 'admin' in roles
+    except Exception as e:
+        print(f"is_admin_user: error: {e}")
+        session.close()
+        return False
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            print("admin_required: User is not authenticated")
+            return render_template("admin_required.html"), 403
+
+        session = Session()
+        try:
+            if not is_admin_user(session):
+                print("admin_required: User is not admin")
+                return render_template("admin_required.html"), 403
+        except Exception as e:
+            print(f"admin_required: got an error: {e}")
+            return render_template("admin_required.html"), 403
+        finally:
+            session.close()
+
+        return f(*args, **kwargs)
+    return decorated_function
 
 
+
+
+
+#///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Registrieren //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+@login_manager.user_loader
+def load_user(user_id):
+    session = Session()
+    ret = session.get(User, int(user_id))
+    session.close()
+    return ret
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))  # Benutzer ist schon eingeloggt → sofort weiterleiten
+
+    session = Session()
+    try:
+        if request.method == 'POST':
+            username = request.form.get('username', '')
+            password = request.form.get('password', '')
+
+            user = session.query(User).filter_by(username=username).first()
+
+            if user:
+                if not user.is_active:
+                    flash('Benutzer ist noch nicht aktiviert.')
+                elif check_password_hash(user.password, password):
+                    login_user(user)
+                    return redirect(url_for('index'))
+                else:
+                    flash('Falsches Passwort.')
+            else:
+                flash('Benutzer nicht gefunden.')
+    finally:
+        session.close()
+
+    return render_template('login.html')
+
+def is_password_complex(password):
+    if len(password) < 8:
+        return False
+    if not re.search(r'[A-Z]', password):  # Großbuchstabe
+        return False
+    if not re.search(r'[a-z]', password):  # Kleinbuchstabe
+        return False
+    if not re.search(r'[0-9]', password):  # Ziffer
+        return False
+    if not re.search(r'[^\w\s]', password):  # Sonderzeichen
+        return False
+    return True
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))  # Bereits angemeldet → weiterleiten
+
+    session = Session()
+    try:
+        if request.method == 'POST':
+            username = request.form.get('username', '')
+            password = request.form.get('password', '')
+
+            # Passwort-Komplexitätsprüfung
+            if not is_password_complex(password):
+                return render_template(
+                    'register.html',
+                    error='Passwort muss mindestens 8 Zeichen lang sein und Großbuchstaben, Kleinbuchstaben, Zahlen und mindestens ein Sonderzeichen beinhalten.'
+                )
+
+            # Prüfen, ob Benutzername bereits existiert
+            existing_user = session.query(User).filter_by(username=username).first()
+            if existing_user:
+                return render_template('register.html', error='Username already taken.')
+
+            # Passwort hashen
+            hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
+
+            # Prüfen, ob dies der erste Benutzer ist
+            user_count = session.query(User).count()
+            if user_count == 0:
+                # Admin-Rolle holen oder erstellen
+                try:
+                    admin_role = session.query(Role).filter_by(name='admin').one()
+                except NoResultFound:
+                    admin_role = Role(name='admin')
+                    session.add(admin_role)
+                    session.commit()
+
+                # Erster Benutzer: aktiv und admin
+                new_user = User(
+                    username=username,
+                    password=hashed_pw,
+                    is_active=True,
+                    role='admin'
+                )
+                new_user.roles.append(admin_role)
+            else:
+                # Weitere Benutzer: nicht aktiv
+                new_user = User(
+                    username=username,
+                    password=hashed_pw,
+                    is_active=False
+                )
+
+            session.add(new_user)
+            session.commit()
+            return redirect(url_for('login'))
+    finally:
+        session.close()
+
+    return render_template('register.html')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+def is_valid_email(email):
+    return bool(EMAIL_REGEX.match(email.strip()))
+
+def column_label(table, col):
+    return COLUMN_LABELS.get(f"{table}.{col}", col.replace("_id", "").replace("_", " ").capitalize())
+	
+
+@app.route('/admin', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_panel():
+    session = Session()
+
+    if request.method == 'POST' and 'new_username' in request.form:
+        username = request.form['new_username']
+        password = request.form['new_password']
+        role_id = request.form.get('new_role')
+
+        if session.query(User).filter_by(username=username).first():
+            flash('Benutzername existiert bereits.')
+        else:
+            hashed = generate_password_hash(password)
+            user = User(username=username, password=hashed, is_active=False)  # NEU: standardmäßig inaktiv
+            if role_id:
+                role = session.query(Role).get(int(role_id))
+                if role:
+                    user.roles.append(role)
+            session.add(user)
+            session.commit()
+            flash('Benutzer hinzugefügt.')
+
+        session.close()
+        return redirect(url_for('admin_panel'))
+
+    # WICHTIG: Rollen eager-laden, um DetachedInstanceError zu vermeiden
+    users = session.query(User).options(joinedload(User.roles)).all()
+    roles = session.query(Role).all()
+
+    session.close()
+    return render_template('admin_panel.html', users=users, roles=roles)
+
+@app.route('/admin/delete/<int:user_id>')
+@login_required
+@admin_required
+def delete_user(user_id):
+    session = Session()
+    user = session.query(User).get(user_id)
+
+    if not user:
+        flash("Benutzer nicht gefunden.")
+    else:
+        session.delete(user)
+        session.commit()
+        flash("Benutzer gelöscht.")
+
+    session.close()
+
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/update/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def update_user(user_id):
+    session = Session()
+
+    user = session.query(User).get(user_id)
+    if not user:
+        flash("Benutzer nicht gefunden.")
+        session.close()
+        return redirect(url_for('admin_panel'))
+
+    # Aktivieren (falls angefragt und noch nicht aktiv)
+    if 'activate_user' in request.form and not user.is_active:
+        user.is_active = True
+        flash(f"Benutzer {user.username} wurde aktiviert.")
+
+    # Benutzername ändern
+    new_username = request.form.get('username')
+    if new_username and new_username != user.username:
+        if session.query(User).filter(User.username == new_username, User.id != user.id).first():
+            flash("Benutzername existiert bereits.")
+            session.close()
+            return redirect(url_for('admin_panel'))
+        user.username = new_username
+
+    # Passwort ändern
+    new_password = request.form.get('new_password')
+    if new_password:
+        user.password = generate_password_hash(new_password)
+
+    # Rolle ändern
+    new_role_id = request.form.get('role_id')
+    user.roles.clear()
+    if new_role_id:
+        role = session.query(Role).get(int(new_role_id))
+        if role:
+            user.roles.append(role)
+
+    # ✅ Readonly setzen
+    user.readonly = 'readonly' in request.form
+
+    session.commit()
+    session.close()
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/activate/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def activate_user(user_id):
+    session = Session()
+    user = session.query(User).get(user_id)
+
+    if not user:
+        session.close()
+        return jsonify(success=False, error="Benutzer nicht gefunden"), 404
+
+    if user.is_active:
+        session.close()
+        return jsonify(success=False, error="Benutzer ist bereits aktiviert"), 400
+
+    user.is_active = True
+    session.commit()
+    session.close()
+
+    return jsonify(success=True)
 
 
 
