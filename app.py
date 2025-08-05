@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import re
 
 # Funktion zum automatischen Installieren eines Moduls
 def install_if_missing(package):
@@ -67,6 +68,7 @@ from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from sqlalchemy.exc import NoResultFound
 
 
 app = Flask(__name__)
