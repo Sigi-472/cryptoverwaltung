@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Startseite</title>
+    <style>
+      /* Hier CSS von deiner Sidebar rein kopieren */
+    </style>
+  </head>
+  <body>
+    {% include 'sidebar.html' %}
+
+    <div class="main-content">
+      <div class="background"></div>
+      <h1>Willkommen bei CoinTracker</h1>
+    </div>
+
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </body>
+</html>

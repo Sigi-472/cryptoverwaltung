@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Krypto</title>
+  </head>
+  <body>
+    {% include 'sidebar.html' %}
+    
+    <div class="main-content">
+      
+      <div class="background"></div>
+      <div class="versteckt">
+        <div id="btc-price">-</div>
+        <div id="sol-price">-</div>
+      </div>
+      <!-- und so weiter für alle Coins, die du anzeigen willst -->
+
+      <h1>Mein Krypto-Portfolio</h1>
+      <table id="portfolioTable">
+        <thead>
+          <tr>
+            <th>Coin</th>
+            <th>Im Besitz</th>
+            <th>Ø Einkaufspreis</th>
+            <th>Aktueller Wert</th>
+            <th>Gewinn / Verlust</th>
+            <th>Kurs (EUR)</th>
+            <th>Kurs (USD)</th>
+            <th>Löschen</th>
+            <!-- Neue Spalte -->
+          </tr>
+        </thead>
+        <tbody>
+          {% for eintrag in eintraege %}
+          <tr>
+            <td>{{ eintrag.coin }}</td>
+            <td>{{ eintrag.im_besitz }}</td>
+            <td>{{ eintrag.durchschnittseinkaufspreis }} €</td>
+            <td>{{ eintrag.aktueller_wert }}</td>
+            <td>{{ eintrag.gewinn_brutto }}</td>
+            <td class="price-cell" data-coin="{{ eintrag.coin }}">
+              {{ eintrag.kurs_eur }}
+            </td>
+            <td>{{ eintrag.kurs_usd }}</td>
+            <td>
+              <a
+                href="{{ url_for('delete_entry', id=eintrag.id) }}"
+                onclick="return confirm('Wirklich löschen?')"
+                >Löschen</a
+              >
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% include 'kauf_verkauf.html' %}
+    </div>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <script src="{{ url_for('static', filename='main.js') }}" defer></script>
+  </body>
+</html>

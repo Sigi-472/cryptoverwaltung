@@ -1,0 +1,154 @@
+table {
+  position: relative;
+  width: 80%;
+  margin: auto;
+  border-collapse: collapse;
+  z-index: 2;
+}
+th,
+td {
+  padding: 8px 12px;
+  border: 1px solid black;
+  text-align: center;
+  z-index: 2;
+   color: white;  /* Schrift weiß */
+}
+
+th {
+  background-color: #222;
+  z-index: 3;
+   color: white;  /* Schrift weiß */
+}
+
+td {
+  background-color: #222;
+  z-index: 2;
+   color: white;  /* Schrift weiß */
+}
+
+h1 {
+  color: white;          /* Schriftfarbe weiß */
+  text-align: center;
+  font-family: sans-serif;
+  background-color: transparent; /* Kein Hintergrund */
+  position: relative;    /* Für z-index, falls nötig */
+  z-index: 3;
+}
+
+
+
+
+.versteckt {
+  visibility: hidden; /* Element bleibt im Layout, ist aber unsichtbar */
+}
+
+
+.btn-kaufen{
+  position:relative;
+  left:30px;
+  top:550px;
+  width:300px;
+  height:80px;
+  color:rgb(0, 0, 0);
+  border-radius: 30px;
+  z-index: 2;
+  font-size: 30px;
+}
+.btn-verkaufen{
+  position:relative;
+  left:30px;
+  top:550px;
+  width:300px;
+  height:80px;
+  color:blue;
+  border-radius: 10px;
+  z-index: 2;
+}
+
+
+
+
+ body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+
+  /* Sidebar Grund-Styles */
+  .sidebar {
+    height: 100vh;
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #000000;
+    color: white;
+    overflow-x: hidden;
+    transition: width 0.3s;
+    padding-top: 60px; /* Platz für Toggle Button */
+    z-index: 2;
+  }
+
+  .sidebar.collapsed {
+    width: 0px;
+  }
+
+  /* Links in Sidebar */
+  .sidebar a {
+    padding: 15px 20px;
+    text-decoration: none;
+    font-size: 18px;
+    color: white;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.2s;
+    z-index: 2;
+  }
+
+  .sidebar a:hover {
+    background-color: #575757;
+  }
+
+  /* Toggle Button */
+  .toggle-btn {
+    position: fixed;
+    top: 15px;
+    left: 260px;
+    font-size: 25px;
+    color: #ffffff;
+    background-color: #222;
+    border: none;
+    cursor: pointer;
+    transition: left 0.3s;
+    padding: 5px 10px;
+    border-radius: 4px;
+    z-index: 2;
+  }
+
+  .sidebar.collapsed + .toggle-btn {
+    left: 10px;
+  }
+  
+  /* Hauptinhalt */
+  .main-content {
+    margin-left: 250px;
+    padding: 20px;
+    transition: margin-left 0.3s;
+    z-index: 2;
+  }
+
+  .sidebar.collapsed ~ .main-content {
+    margin-left: 60px;
+  }
+
+.background {
+  position: fixed;
+  background-color: #111;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  
+}

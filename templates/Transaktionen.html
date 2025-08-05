@@ -1,0 +1,49 @@
+<!-- Transaktionen.html -->
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Kaufhistorie</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    {% include 'sidebar.html' %}
+  </head>
+  <body>
+    <div class="main-content">
+      
+      <div class="background"></div>
+    <h1>Kaufhistorie</h1>
+
+    <table  id="kaeufeTable">
+      <thead>
+        <tr>
+          <th>Coin</th>
+          <th>Anzahl</th>
+          <th>Preis (€)</th>
+          <th>Kaufdatum</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for eintrag in kaeufe %}
+        <tr>
+          <td>{{ eintrag.coin }}</td>
+          <td>{{ eintrag.anzahl }}</td>
+          <td>{{ "{:.2f}".format(eintrag.preis) }}</td>
+          <td>{{ eintrag.kaufdatum.strftime('%d.%m.%Y') }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">Keine Käufe vorhanden.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    
+    </div>
+    </div>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+  </body>
+</html>

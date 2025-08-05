@@ -1,0 +1,17 @@
+<div class="sidebar" id="sidebar">
+  
+  <a href="/">Startseite</a>
+  <a href="/Mein_Portfolio">Mein Portfolio</a>
+  <a href="/Transaktionen">Transaktionen</a>
+</div>
+
+<button class="toggle-btn" id="toggleBtn">&#9776;</button>
+
+<script>
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('toggleBtn');
+
+  toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+  });
+</script>

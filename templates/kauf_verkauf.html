@@ -1,0 +1,86 @@
+<button id="buy_btn" class="btn-kaufen">Neuen Coin kaufen</button>
+<button id="sell_btn" class="btn-verkaufen">Verkaufen</button>
+
+<form
+  id="form_id"
+  style="
+    display: none;
+    position: absolute;
+    background: #eee;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 2;
+  "
+>
+  <label for="coinSelect">Coin:</label>
+  <br> 
+  <select id="coinSelect" name="coinSelect">
+    <option value="AAVE">AAVE</option>
+    <option value="ADA">ADA</option>
+    <option value="ALEO">ALEO</option>
+    <option value="ALGO">ALGO</option>
+    <option value="APE">APE</option>
+    <option value="AVAX">AVAX</option>
+    <option value="BCH">BCH</option>
+    <option value="BNB">BNB</option>
+    <option value="BTC">BTC</option>
+    <option value="CHZ">CHZ</option>
+    <option value="DEGEN">DEGEN</option>
+    <option value="DOGE">DOGE</option>
+    <option value="DOT">DOT</option>
+    <option value="ETH">ETH</option>
+    <option value="FIL">FIL</option>
+    <option value="KSM">KSM</option>
+    <option value="LTC">LTC</option>
+    <option value="LINK">LINK</option>
+    <option value="MANA">MANA</option>
+    <option value="MATIC">MATIC</option>
+    <option value="NEAR">NEAR</option>
+    <option value="ONDO">ONDO</option>
+    <option value="SAND">SAND</option>
+    <option value="SHIB">SHIB</option>
+    <option value="SOL">SOL</option>
+    <option value="SUI">SUI</option>
+    <option value="TRX">TRX</option>
+    <option value="UNI">UNI</option>
+    <option value="USDT">USDT</option>
+    <option value="VET">VET</option>
+    <option value="XEC">XEC</option>
+    <option value="XLM">XLM</option>
+    <option value="XRP">XRP</option>
+    <option value="XTZ">XTZ</option>
+    <option value="ZETACHAIN">ZETACHAIN</option>
+    <option value="ZRX">ZRX</option>
+  </select>
+  <br />
+  <label>Anzahl: <input type="number" id="amountInput" step="0.0001" /></label
+  ><br />
+  <label
+    >Einkaufspreis pro Coin:
+    <input type="number" id="priceInput" step="0.01" /></label
+  ><br />
+  <label>Kaufdatum: <input type="date" id="buyDateInput" /></label><br />
+  <button id="saveBtn" type="submit">kaufen</button>
+  <button id="cancelBtn" type="button">Abbrechen</button>
+</form>
+
+<!-- VERKAUFSFORMULAR -->
+<form
+  id="sell_form_id"
+  style="
+    display: none;
+    position: absolute;
+    background: #eee;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 2;
+  "
+>
+  <label>Coin: <input type="text" id="sellCoinInput" /></label><br />
+  <label
+    >Anzahl: <input type="number" id="sellAmountInput" step="0.0001" /></label
+  ><br />
+  <label>Verkaufsdatum: <input type="date" id="sellDateInput" /></label><br />
+  <button id="saveSellBtn" type="submit">Verkaufen</button>
+  <button id="cancelSellBtn" type="button">Abbrechen</button>
+</form>
