@@ -58,7 +58,7 @@ sigils = [
 ]
 
 # Jetzt die importierten Module verwenden
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, send_from_directory
 import requests
 from flask_cors import CORS
 from sqlalchemy import create_engine, Column, Integer, Float, String, Date, Boolean, ForeignKey, Table
@@ -180,6 +180,10 @@ def inject_data():
         is_admin=is_admin,
         user=user
     )
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(app.static_folder, 'favicon.png')
 
 @app.route('/')
 @login_required
