@@ -260,7 +260,28 @@ function updatePriceInDOM(coin, price) {
   });
 }
 
+function colorize_kaeufe_table () {
+	var trs = $("#kaeufeTable").find("tr");
 
+  if(trs.length) {
+    trs.each(function() {
+      var tds = $(this).find("td");
+      if(tds.length) {
+        var anzahl = parseFloat($(tds[1]).text());
+        
+        if (anzahl > 0) {
+            $(tds).css("color", "green");
+          } else if (anzahl < 0) {
+            $(tds).css("color", "red");
+          } else if (isNaN(anzahl)) {
+            //
+          } else {
+            $(tds).css("color", "black");
+          }
+      }
+    });
+  }
+}
 
 async function postKauf(daten) {
   const res = await fetch("/api/kauf-und-portfolio", {
@@ -424,3 +445,5 @@ async function fetchEurToUsdRate() {
 
 setInterval(updatePrices, 10000);
 updatePrices();
+
+colorize_kaeufe_table();
