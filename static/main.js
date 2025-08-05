@@ -76,17 +76,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (sellBtn) {
-    sellBtn.addEventListener("click", () => {
-      sellForm.style.display = "block";
-      form.style.display = "none";
-    });
-  }
 
   if (cancelBtn) {
     cancelBtn.addEventListener("click", () => {
       form.reset(); // Formular leeren
       form.style.display = "none"; // Formular verstecken
+    });
+  }
+
+  if (sellBtn) {
+    sellBtn.addEventListener("click", () => {
+      sellForm.style.display = "block";
+      form.style.display = "none";
     });
   }
 
@@ -96,21 +97,20 @@ document.addEventListener("DOMContentLoaded", () => {
       sellForm.style.display = "none";
     });
   }
+
   if (saveSellBtn) {
-    saveBtn.addEventListener("click", async (event) => {
+    saveSellBtn.addEventListener("click", async (event) => {
       event.preventDefault();
 
       const daten = {
-        coin: document.getElementById("coinSelect").value,
-        im_besitz: parseFloat(document.getElementById("amountInput").value),
-        durchschnittseinkaufspreis: parseFloat(
-          document.getElementById("priceInput").value
-        ),
-        kaufdatum: document.getElementById("buyDateInput").value,
+        coin: document.getElementById("sellCoinInput").value,
+        anzahl: parseFloat(document.getElementById("sellAmountInput").value),
+        verkaufspreis: parseFloat(document.getElementById("sellPriceInput").value),
+        verkaufsdatum: document.getElementById("sellDateInput").value,
       };
 
       try {
-        const res = await fetch("/api/kauf-und-portfolio", {
+        const res = await fetch("/api/verkauf", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(daten),
@@ -122,7 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!res.ok) throw new Error(`Server Fehler: ${text}`);
 
-        // Versuche JSON zu parsen (falls du das brauchst)
         try {
           const json = JSON.parse(text);
           console.log("Response JSON:", json);
@@ -130,11 +129,11 @@ document.addEventListener("DOMContentLoaded", () => {
           console.warn("Antwort kein JSON");
         }
 
-        form.reset();
-        form.style.display = "none";
-        await updatePortfolio();
+        sellForm.reset();
+        sellForm.style.display = "none";
+        await updatePortfolio(); // Falls du das Portfolio nach Verkauf aktualisieren willst
       } catch (error) {
-        alert("❌ Fehler beim Kauf: " + error.message);
+        alert("❌ Fehler beim Verkauf: " + error.message);
       }
     });
   }

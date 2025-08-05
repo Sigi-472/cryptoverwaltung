@@ -1,5 +1,4 @@
 <button id="buy_btn" class="btn-kaufen">Neuen Coin kaufen</button>
-<button id="sell_btn" class="btn-verkaufen">Verkaufen</button>
 
 <form
   id="form_id"
@@ -65,6 +64,12 @@
 </form>
 
 <!-- VERKAUFSFORMULAR -->
+<button id="sell_btn" class="btn-verkaufen">Verkaufen</button>
+
+
+
+
+
 <form
   id="sell_form_id"
   style="
@@ -77,9 +82,8 @@
   "
 >
   <label>Coin: <input type="text" id="sellCoinInput" /></label><br />
-  <label
-    >Anzahl: <input type="number" id="sellAmountInput" step="0.0001" /></label
-  ><br />
+  <label>Anzahl: <input type="number" id="sellAmountInput" step="0.0001" /></label><br />
+  <label>Verkaufspreis: <input type="number" id="sellPriceInput" step="0.01" /></label><br />
   <label>Verkaufsdatum: <input type="date" id="sellDateInput" /></label><br />
   <button id="saveSellBtn" type="submit">Verkaufen</button>
   <button id="cancelSellBtn" type="button">Abbrechen</button>

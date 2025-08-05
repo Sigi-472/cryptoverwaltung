@@ -327,6 +327,7 @@ def add_verkauf():
     try:
         coin = data['coin']
         anzahl = float(data['anzahl'])
+        verkaufspreis = float(data['verkaufspreis'])  # NEU
         verkaufsdatum_str = data['verkaufsdatum']
 
         from datetime import datetime
@@ -334,11 +335,11 @@ def add_verkauf():
 
         session = Session()
 
-        # Verkauf als negativer Eintrag in kaeufe speichern (kaufdatum = verkaufsdatum)
+        # Verkauf als negativer KaufEintrag speichern
         verkauf_eintrag = KaufEintrag(
             coin=coin,
-            anzahl=-anzahl,  # Verkauf: negative Menge
-            preis=0,  # Preis kann 0 oder optional angegeben werden
+            anzahl=-anzahl,
+            preis=verkaufspreis,  # HIER Verkaufspreis speichern
             kaufdatum=verkaufsdatum
         )
         session.add(verkauf_eintrag)
@@ -356,7 +357,6 @@ def add_verkauf():
             return jsonify({'error': 'Nicht genügend Coins zum Verkauf'}), 400
 
         portfolio_eintrag.im_besitz -= anzahl
-        # Wenn im_besitz 0, kann man ggf. auch durchschnittspreis auf 0 setzen oder Eintrag löschen
 
         session.commit()
         session.close()
@@ -365,6 +365,7 @@ def add_verkauf():
         session.rollback()
         session.close()
         return jsonify({'error': str(e)}), 500
+
 
 
 
