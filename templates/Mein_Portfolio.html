@@ -26,7 +26,6 @@
             <th>Gewinn / Verlust</th>
             <th>Kurs (EUR)</th>
             <th>Kurs (USD)</th>
-            <th>Löschen</th>
             <!-- Neue Spalte -->
           </tr>
         </thead>
@@ -42,13 +41,6 @@
               {{ eintrag.kurs_eur }}
             </td>
             <td>{{ eintrag.kurs_usd }}</td>
-            <td>
-              <a
-                href="{{ url_for('delete_entry', id=eintrag.id) }}"
-                onclick="return confirm('Wirklich löschen?')"
-                >Löschen</a
-              >
-            </td>
           </tr>
           {% endfor %}
         </tbody>
