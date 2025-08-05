@@ -318,16 +318,16 @@ def get_portfolio_und_kaeufe():
 
 
 
-
 @app.route('/api/verkauf', methods=['POST'])
 def add_verkauf():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Keine Daten empfangen'}), 400
+
     try:
         coin = data['coin']
         anzahl = float(data['anzahl'])
-        verkaufspreis = float(data['verkaufspreis'])  # NEU
+        verkaufspreis = float(data['verkaufspreis'])
         verkaufsdatum_str = data['verkaufsdatum']
 
         from datetime import datetime
@@ -339,7 +339,7 @@ def add_verkauf():
         verkauf_eintrag = KaufEintrag(
             coin=coin,
             anzahl=-anzahl,
-            preis=verkaufspreis,  # HIER Verkaufspreis speichern
+            preis=verkaufspreis,
             kaufdatum=verkaufsdatum
         )
         session.add(verkauf_eintrag)
@@ -358,13 +358,20 @@ def add_verkauf():
 
         portfolio_eintrag.im_besitz -= anzahl
 
+        # Wenn nichts mehr im Besitz, löschen
+        if portfolio_eintrag.im_besitz <= 0:
+            session.delete(portfolio_eintrag)
+
         session.commit()
         session.close()
+
         return jsonify({'message': 'Verkauf gespeichert'}), 200
+
     except Exception as e:
         session.rollback()
         session.close()
         return jsonify({'error': str(e)}), 500
+
 
 
 

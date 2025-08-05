@@ -76,13 +76,54 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
   if (cancelBtn) {
     cancelBtn.addEventListener("click", () => {
-      form.reset(); // Formular leeren
-      form.style.display = "none"; // Formular verstecken
+      form.reset();
+      form.style.display = "none";
     });
   }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async (event) => {
+      event.preventDefault();
+
+      const daten = {
+        coin: document.getElementById("coinSelect").value,
+        im_besitz: parseFloat(document.getElementById("amountInput").value),
+        durchschnittseinkaufspreis: parseFloat(
+          document.getElementById("priceInput").value
+        ),
+        kaufdatum: document.getElementById("buyDateInput").value,
+      };
+
+      try {
+        const res = await fetch("/api/kauf-und-portfolio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(daten),
+        });
+
+        const text = await res.text();
+        console.log("Status:", res.status);
+        console.log("Response Text:", text);
+
+        if (!res.ok) throw new Error(`Server Fehler: ${text}`);
+
+        try {
+          const json = JSON.parse(text);
+          console.log("Response JSON:", json);
+        } catch {
+          console.warn("Antwort kein JSON");
+        }
+
+        form.reset();
+        form.style.display = "none";
+        await updatePortfolio?.();
+      } catch (error) {
+        alert("❌ Fehler beim Kauf: " + error.message);
+      }
+    });
+  } // ← WICHTIG! Dieser Block muss geschlossen werden
 
   if (sellBtn) {
     sellBtn.addEventListener("click", () => {
@@ -131,13 +172,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         sellForm.reset();
         sellForm.style.display = "none";
-        await updatePortfolio(); // Falls du das Portfolio nach Verkauf aktualisieren willst
+        await updatePortfolio?.(); // Optional aufrufen
       } catch (error) {
         alert("❌ Fehler beim Verkauf: " + error.message);
       }
     });
   }
 });
+
 
 async function updatePrices() {
   const priceCells = document.querySelectorAll(".price-cell");
