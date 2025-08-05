@@ -176,12 +176,18 @@ function updatePriceInDOM(coin, price) {
     }
     const rowCoin = tds[0].textContent.trim().toUpperCase();
     if (rowCoin === coin) {
+      const kursUSD = price / eurToUsd;
+      tds[5].textContent = kursUSD.toFixed(2) + " €";
+
+      console.log ("USD Kurs aktualisieren" + price);
+      tds[6].textContent = price.toFixed(2) + " $";
+
       const durchschnittspreis = parseFloat(tds[2].textContent.replace(",", "."));
       tds[2].textContent = durchschnittspreis.toFixed(2) + " €";
 
       const imBesitz = parseFloat(tds[1].textContent.replace(",", "."));
 
-      const aktuellerWert = price * imBesitz;
+      const aktuellerWert = kursUSD * imBesitz;
       tds[3].textContent = aktuellerWert.toFixed(2) + " €";
 
       const einkaufswert = imBesitz * durchschnittspreis;
@@ -195,11 +201,9 @@ function updatePriceInDOM(coin, price) {
       } else {
         tds[4].style.color = "black";
       }
+    
 
-      tds[5].textContent = price.toFixed(2) + " €";
-
-      const kursUSD = price * eurToUsd;
-      tds[6].textContent = kursUSD.toFixed(2) + " $";
+      
     }
   });
 }
