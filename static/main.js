@@ -70,14 +70,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveSellBtn = document.getElementById("saveSellBtn");
 
   if (buyBtn) {
-    buyBtn.addEventListener("click", () => {
+    buyBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       if (form) form.style.display = "block";
       if (sellForm) sellForm.style.display = "none";
     });
   }
 
   if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
+    cancelBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       if (form) {
         form.reset();
         form.style.display = "none";
@@ -131,14 +133,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (sellBtn) {
-    sellBtn.addEventListener("click", () => {
+    sellBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       if (sellForm) sellForm.style.display = "block";
       if (form) form.style.display = "none";
     });
   }
 
   if (cancelSellBtn) {
-    cancelSellBtn.addEventListener("click", () => {
+    cancelSellBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       if (sellForm) {
         sellForm.reset();
         sellForm.style.display = "none";
@@ -189,6 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
 
 
 async function updatePrices() {

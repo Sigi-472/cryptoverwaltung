@@ -144,3 +144,26 @@ h1 {
     margin-left: 0px;
   }
 }
+
+/* Buttons wie Sidebar-Links stylen */
+.sidebar button.btn-kaufen,
+.sidebar button.btn-verkaufen {
+  padding: 15px 20px;
+  font-size: 18px;
+  color: white;
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sidebar button.btn-kaufen:hover,
+.sidebar button.btn-verkaufen:hover {
+  background-color: #575757;
+}
