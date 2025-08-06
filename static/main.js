@@ -344,6 +344,10 @@ async function updateKaeufe() {
       `;
       tbody.appendChild(tr);
     });
+
+    // Farben nach dem Befüllen setzen
+    colorize_kaeufe_table();
+
   } catch (error) {
     console.error('Fehler beim Aktualisieren der Käufe:', error);
   }
@@ -435,6 +439,7 @@ function updatePortfolioTable(portfolio) {
 }
 
 function updateKaeufeTable(kaeufe) {
+  console.log('updateKaeufeTable wurde aufgerufen', kaeufe);
   const tbody = document.querySelector('#kaeufeTable tbody');
   if (!tbody) {
     console.warn('Kein #kaeufeTable tbody gefunden, updateKaeufeTable wird abgebrochen');
@@ -451,19 +456,14 @@ function updateKaeufeTable(kaeufe) {
       <td>${kauf.differenz !== undefined ? kauf.differenz.toFixed(2) + ' €' : '–'}</td>
       <td>${kauf.kommentar || '–'}</td>
     `;
-    // Farbgebung je nach Differenz
-    if (kauf.differenz !== undefined) {
-      if (kauf.differenz > 0) {
-        tr.style.color = "green";
-      } else if (kauf.differenz < 0) {
-        tr.style.color = "red";
-      } else {
-        tr.style.color = "black";
-      }
-    }
-    tbody.appendChild(tr);
+    tbody.appendChild(tr); // zuerst anhängen
   });
+
+  console.log('Vor dem Aufruf von colorize_kaeufe_table');
+  colorize_kaeufe_table();
+  console.log('Nach dem Aufruf von colorize_kaeufe_table');
 }
+
 
 
 
