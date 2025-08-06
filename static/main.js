@@ -71,21 +71,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (buyBtn) {
     buyBtn.addEventListener("click", () => {
-      form.style.display = "block";
-      sellForm.style.display = "none";
+      if (form) form.style.display = "block";
+      if (sellForm) sellForm.style.display = "none";
     });
   }
 
   if (cancelBtn) {
     cancelBtn.addEventListener("click", () => {
-      form.reset();
-      form.style.display = "none";
+      if (form) {
+        form.reset();
+        form.style.display = "none";
+      }
     });
   }
 
   if (saveBtn) {
     saveBtn.addEventListener("click", async (event) => {
       event.preventDefault();
+
+      if (!form) return;
 
       const daten = {
         coin: document.getElementById("coinSelect").value,
@@ -94,6 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("priceInput").value
         ),
         kaufdatum: document.getElementById("buyDateInput").value,
+        kommentar: document.getElementById("buyCommentInput").value,
       };
 
       try {
@@ -123,19 +128,21 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("❌ Fehler beim Kauf: " + error.message);
       }
     });
-  } // ← WICHTIG! Dieser Block muss geschlossen werden
+  }
 
   if (sellBtn) {
     sellBtn.addEventListener("click", () => {
-      sellForm.style.display = "block";
-      form.style.display = "none";
+      if (sellForm) sellForm.style.display = "block";
+      if (form) form.style.display = "none";
     });
   }
 
   if (cancelSellBtn) {
     cancelSellBtn.addEventListener("click", () => {
-      sellForm.reset();
-      sellForm.style.display = "none";
+      if (sellForm) {
+        sellForm.reset();
+        sellForm.style.display = "none";
+      }
     });
   }
 
@@ -143,11 +150,14 @@ document.addEventListener("DOMContentLoaded", () => {
     saveSellBtn.addEventListener("click", async (event) => {
       event.preventDefault();
 
+      if (!sellForm) return;
+
       const daten = {
         coin: document.getElementById("sellCoinInput").value,
         anzahl: parseFloat(document.getElementById("sellAmountInput").value),
         verkaufspreis: parseFloat(document.getElementById("sellPriceInput").value),
         verkaufsdatum: document.getElementById("sellDateInput").value,
+        kommentar: document.getElementById("buyDateInput").value,
       };
 
       try {
@@ -172,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         sellForm.reset();
         sellForm.style.display = "none";
-        await updatePortfolio?.(); // Optional aufrufen
+        await updatePortfolio?.();
       } catch (error) {
         alert("❌ Fehler beim Verkauf: " + error.message);
       }
@@ -260,24 +270,24 @@ function updatePriceInDOM(coin, price) {
   });
 }
 
-function colorize_kaeufe_table () {
-	var trs = $("#kaeufeTable").find("tr");
+function colorize_kaeufe_table() {
+  var trs = $("#kaeufeTable").find("tr");
 
-  if(trs.length) {
-    trs.each(function() {
+  if (trs.length) {
+    trs.each(function () {
       var tds = $(this).find("td");
-      if(tds.length) {
+      if (tds.length) {
         var anzahl = parseFloat($(tds[1]).text());
-        
+
         if (anzahl > 0) {
-            $(tds).css("color", "green");
-          } else if (anzahl < 0) {
-            $(tds).css("color", "red");
-          } else if (isNaN(anzahl)) {
-            //
-          } else {
-            $(tds).css("color", "black");
-          }
+          $(tds).css("color", "green");
+        } else if (anzahl < 0) {
+          $(tds).css("color", "red");
+        } else if (isNaN(anzahl)) {
+          //
+        } else {
+          $(tds).css("color", "black");
+        }
       }
     });
   }
@@ -399,7 +409,6 @@ function updatePortfolioTable(portfolio) {
       <td>${eintrag.gewinn_brutto ?? '–'}</td>
       <td class="price-cell" data-coin="${eintrag.coin}">${eintrag.kurs_eur ?? '–'}</td>
       <td>${eintrag.kurs_usd ?? '–'}</td>
-      <td><a href="/delete/${eintrag.id}" onclick="return confirm('Wirklich löschen?')">Löschen</a></td>
     `;
     tbody.appendChild(tr);
   });
@@ -415,6 +424,7 @@ function updateKaeufeTable(kaeufe) {
       <td>${kauf.anzahl}</td>
       <td>${kauf.preis}</td>
       <td>${kauf.kaufdatum}</td>
+      <td>${eintrag.kommentar || '–'}</td> <!-- 💬 NEU: Kommentar -->
     `;
     tbody.appendChild(tr);
   });

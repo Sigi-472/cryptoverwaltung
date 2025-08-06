@@ -1,18 +1,15 @@
-<button id="buy_btn" class="btn-kaufen">Neuen Coin kaufen</button>
 
-<form
-  id="form_id"
-  style="
+
+<form id="form_id" style="
     display: none;
     position: absolute;
     background: #eee;
     border: 1px solid #ccc;
     padding: 10px;
     z-index: 2;
-  "
->
+  ">
   <label for="coinSelect">Coin:</label>
-  <br> 
+  <br>
   <select id="coinSelect" name="coinSelect">
     <option value="AAVE">AAVE</option>
     <option value="ADA">ADA</option>
@@ -52,39 +49,39 @@
     <option value="ZRX">ZRX</option>
   </select>
   <br />
-  <label>Anzahl: <input type="number" id="amountInput" step="0.0001" /></label
-  ><br />
-  <label
-    >Einkaufspreis pro Coin:
-    <input type="number" id="priceInput" step="0.01" /></label
-  ><br />
+  <label>Anzahl: <input type="number" id="amountInput" step="0.0001" /></label><br />
+  <label>Einkaufspreis pro Coin:
+    <input type="number" id="priceInput" step="0.01" /></label><br />
   <label>Kaufdatum: <input type="date" id="buyDateInput" /></label><br />
+  <label>Kommentar:<br />
+    <textarea id="buyCommentInput" rows="3" cols="30" placeholder="optional..."></textarea>
+  </label><br />
   <button id="saveBtn" type="submit">kaufen</button>
   <button id="cancelBtn" type="button">Abbrechen</button>
 </form>
 
 <!-- VERKAUFSFORMULAR -->
-<button id="sell_btn" class="btn-verkaufen">Verkaufen</button>
 
 
 
 
 
-<form
-  id="sell_form_id"
-  style="
+
+<form id="sell_form_id" style="
     display: none;
     position: absolute;
     background: #eee;
     border: 1px solid #ccc;
     padding: 10px;
     z-index: 2;
-  "
->
+  ">
   <label>Coin: <input type="text" id="sellCoinInput" /></label><br />
   <label>Anzahl: <input type="number" id="sellAmountInput" step="0.0001" /></label><br />
   <label>Verkaufspreis: <input type="number" id="sellPriceInput" step="0.01" /></label><br />
   <label>Verkaufsdatum: <input type="date" id="sellDateInput" /></label><br />
+  <label>Kommentar:<br />
+    <textarea id="sellCommentInput" rows="3" cols="30" placeholder="optional..."></textarea>
+  </label><br />
   <button id="saveSellBtn" type="submit">Verkaufen</button>
   <button id="cancelSellBtn" type="button">Abbrechen</button>
 </form>

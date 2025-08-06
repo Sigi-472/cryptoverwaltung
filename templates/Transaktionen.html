@@ -1,28 +1,29 @@
 <!-- Transaktionen.html -->
 <!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Kaufhistorie</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-    {% include 'sidebar.html' %}
-  </head>
-  <body>
-    <div class="main-content">
-      
-      <div class="background"></div>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Kaufhistorie</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  {% include 'sidebar.html' %}
+</head>
+
+<body>
+  <div class="main-content">
+
+    <div class="background"></div>
     <h1>Kaufhistorie</h1>
 
-    <table  id="kaeufeTable">
+    <table id="kaeufeTable">
       <thead>
         <tr>
           <th>Coin</th>
           <th>Anzahl</th>
           <th>Einkauf/Verkaufspreis (€)</th>
           <th>Kauf/Verkaufdatum</th>
+          <th>Differenz (€)</th> <!-- NEU -->
+          <th>Kommentar</th> <!-- NEU -->
         </tr>
       </thead>
       <tbody>
@@ -32,18 +33,26 @@
           <td>{{ eintrag.anzahl }}</td>
           <td>{{ "{:.2f}".format(eintrag.preis) }}</td>
           <td>{{ eintrag.kaufdatum.strftime('%d.%m.%Y') }}</td>
+          <td>
+            {% if eintrag.differenz is not none %}
+            {{ "{:.2f}".format(eintrag.differenz) }}
+            {% else %}
+            -
+            {% endif %}
+          </td>
+          <td>{{ eintrag.kommentar or '-' }}</td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="5">Keine Käufe vorhanden.</td>
+          <td colspan="6">Keine Käufe vorhanden.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
 
-    
-    </div>
-    </div>
-    <script src="{{ url_for('static', filename='main.js') }}"></script>
-  </body>
+  </div>
+  </div>
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+
 </html>

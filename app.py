@@ -108,6 +108,8 @@ class KaufEintrag(Base):
     anzahl = Column(Float, nullable=False)
     preis = Column(Float, nullable=False)
     kaufdatum = Column(Date, nullable=False)
+    differenz = Column(Float, nullable=True) 
+    kommentar = Column(String, nullable=True) 
 
 class User(UserMixin, Base):
     __tablename__ = "user"
@@ -329,13 +331,15 @@ def kauf_und_portfolio():
         anzahl = float(data['im_besitz'])
         preis = float(data['durchschnittseinkaufspreis'])
         kaufdatum = datetime.strptime(data['kaufdatum'], '%Y-%m-%d').date()
+        kommentar = data.get('kommentar')  # ✅ Kommentar optional auslesen
 
         # Kauf in Tabelle 'kaeufe' speichern
         kauf = KaufEintrag(
             coin=coin,
             anzahl=anzahl,
             preis=preis,
-            kaufdatum=kaufdatum
+            kaufdatum=kaufdatum,
+            kommentar=kommentar  # ✅ Kommentar speichern
         )
         session.add(kauf)
 
