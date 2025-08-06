@@ -1,17 +1,57 @@
+<style>
+  input,
+  select,
+  textarea {
+    background-color: #222;
+    color: white;
+    border: 1px solid #555;
+  }
 
+  input::placeholder,
+  textarea::placeholder {
+    color: #aaa;
+  }
+
+  /* Optional: Fokus-Styling */
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #888;
+    box-shadow: 0 0 4px #888;
+  }
+
+  /* Dunkle Buttons */
+  button {
+    background-color: #222;
+    color: white;
+    border: 1px solid #555;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #333;
+    border-color: #888;
+  }
+
+  button:active {
+    background-color: #111;
+  }
+</style>
 
 <form id="form_id" style="
       display: none;
     position: fixed;
     top: 215px;
     left:250px;
-    background: #eee;
-    border: 1px solid #ccc;
+    background: #222;
+    border: 1px solid #000000;
+    color:white;
     padding: 10px;
     z-index: 2;
   ">
   <label for="coinSelect">Coin:</label>
-  <br>
   <select id="coinSelect" name="coinSelect">
     <option value="AAVE">AAVE</option>
     <option value="ADA">ADA</option>
@@ -70,12 +110,13 @@
 
 
 <form id="sell_form_id" style="
-    display: none;
+     display: none;
     position: fixed;
-    top: 266px;
+    top: 215px;
     left:250px;
-    background: #eee;
-    border: 1px solid #ccc;
+    background: #222;
+    border: 1px solid #000000;
+    color:white;
     padding: 10px;
     z-index: 2;
   ">
