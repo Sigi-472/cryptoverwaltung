@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import re
+from sqlalchemy import asc
 
 # Funktion zum automatischen Installieren eines Moduls
 def install_if_missing(package):
@@ -110,6 +111,7 @@ class KaufEintrag(Base):
     kaufdatum = Column(Date, nullable=False)
     differenz = Column(Float, nullable=True) 
     kommentar = Column(String, nullable=True) 
+    rest_anzahl = Column(Float, nullable=True)  # Neue Spalte hier
 
 class User(UserMixin, Base):
     __tablename__ = "user"
@@ -339,7 +341,8 @@ def kauf_und_portfolio():
             anzahl=anzahl,
             preis=preis,
             kaufdatum=kaufdatum,
-            kommentar=kommentar  # ✅ Kommentar speichern
+            kommentar=kommentar,  # ✅ Kommentar speichern
+            rest_anzahl=anzahl,  # <-- hier ergänzen!
         )
         session.add(kauf)
 
@@ -410,6 +413,7 @@ def get_portfolio_und_kaeufe():
 
 @app.route('/api/verkauf', methods=['POST'])
 def add_verkauf():
+    session = Session()
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Keine Daten empfangen'}), 400
@@ -420,32 +424,24 @@ def add_verkauf():
         verkaufspreis = float(data['verkaufspreis'])
         verkaufsdatum_str = data['verkaufsdatum']
         kommentar = data.get("kommentar", "")
+        rest_anzahl = anzahl
 
         from datetime import datetime
         verkaufsdatum = datetime.strptime(verkaufsdatum_str, '%Y-%m-%d').date()
 
-        session = Session()
-
         # Portfolio prüfen
         portfolio_eintrag = session.query(PortfolioEintrag).filter_by(coin=coin).first()
         if not portfolio_eintrag:
-            session.close()
             return jsonify({'error': 'Coin nicht im Portfolio'}), 400
 
         if portfolio_eintrag.im_besitz < anzahl:
-            session.close()
             return jsonify({'error': 'Nicht genügend Coins zum Verkauf'}), 400
 
-        # Kaufeinträge (positive anzahl) nach Kaufdatum sortiert laden (FIFO)
-        offene_kaeufe = (
-            session.query(KaufEintrag)
-            .filter(
-                KaufEintrag.coin == coin,
-                KaufEintrag.anzahl > 0
-            )
-            .order_by(KaufEintrag.kaufdatum.asc(), KaufEintrag.id.asc())
-            .all()
-        )
+        # Kaufeinträge (FIFO) laden
+        offene_kaeufe = session.query(KaufEintrag).filter(
+            KaufEintrag.coin == coin,
+            KaufEintrag.rest_anzahl > 0
+        ).order_by(KaufEintrag.kaufdatum.asc(), KaufEintrag.id.asc()).all()
 
         rest_anzahl = anzahl
         einkaufskosten = 0.0
@@ -454,24 +450,23 @@ def add_verkauf():
             if rest_anzahl <= 0:
                 break
 
-            verwendete_anzahl = min(kauf.anzahl, rest_anzahl)
+            verwendete_anzahl = min(kauf.rest_anzahl, rest_anzahl)
+
+            # Einkaufskosten berechnen
             einkaufskosten += verwendete_anzahl * kauf.preis
 
-            # Kauf-Anzahl reduzieren
-            kauf.anzahl -= verwendete_anzahl
+            # Kaufeintrag aktualisieren
+            kauf.rest_anzahl -= verwendete_anzahl
             rest_anzahl -= verwendete_anzahl
 
         if rest_anzahl > 0:
-            # Sollte nicht passieren, da Portfolio geprüft wurde
             session.rollback()
-            session.close()
             return jsonify({'error': 'Nicht genügend Käufe vorhanden für Verkauf'}), 400
 
-        # Differenz berechnen
         gesamter_verkaufspreis = anzahl * verkaufspreis
         differenz = gesamter_verkaufspreis - einkaufskosten
 
-        # Verkauf als negativer KaufEintrag mit Differenz speichern
+        # Verkauf speichern
         verkauf_eintrag = KaufEintrag(
             coin=coin,
             anzahl=-anzahl,
@@ -482,20 +477,20 @@ def add_verkauf():
         )
         session.add(verkauf_eintrag)
 
-        # Portfolio anpassen
+        # Portfolio aktualisieren
         portfolio_eintrag.im_besitz -= anzahl
         if portfolio_eintrag.im_besitz <= 0:
             session.delete(portfolio_eintrag)
 
         session.commit()
-        session.close()
-
         return jsonify({'message': 'Verkauf gespeichert', 'differenz': differenz}), 200
 
     except Exception as e:
         session.rollback()
-        session.close()
         return jsonify({'error': str(e)}), 500
+
+    finally:
+        session.close()
 
 def admin_required(f):
     @wraps(f)
