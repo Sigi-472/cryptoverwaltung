@@ -389,7 +389,9 @@ def get_portfolio_und_kaeufe():
                 'coin': k.coin,
                 'anzahl': k.anzahl,
                 'preis': k.preis,
-                'kaufdatum': k.kaufdatum.strftime('%Y-%m-%d')
+                'kaufdatum': k.kaufdatum.strftime('%Y-%m-%d'),
+                'differenz': getattr(k, 'differenz', None),     # <-- hinzufügen
+                'kommentar': getattr(k, 'kommentar', '')        # <-- hinzufügen
             } for k in kaeufe
         ]
         portfolio_data = [

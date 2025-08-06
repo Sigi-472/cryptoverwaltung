@@ -104,28 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       try {
-        const res = await fetch("/api/kauf-und-portfolio", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(daten),
-        });
-
-        const text = await res.text();
-        console.log("Status:", res.status);
-        console.log("Response Text:", text);
-
-        if (!res.ok) throw new Error(`Server Fehler: ${text}`);
-
-        try {
-          const json = JSON.parse(text);
-          console.log("Response JSON:", json);
-        } catch {
-          console.warn("Antwort kein JSON");
-        }
+        await kaufeUndAktualisiere(daten);  // Hier wird die Käufe + Portfolio Tabelle aktualisiert
+        await updatePortfolio(); // Portfolio Tabelle aktualisieren
+        await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
 
         form.reset();
         form.style.display = "none";
-        await updatePortfolio?.();
       } catch (error) {
         alert("❌ Fehler beim Kauf: " + error.message);
       }
@@ -190,13 +174,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         sellForm.reset();
         sellForm.style.display = "none";
-        await updatePortfolio?.();
+
+        await updatePortfolio(); // Nur Portfolio Tabelle aktualisieren, Käufe nicht
+        await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
+
       } catch (error) {
         alert("❌ Fehler beim Verkauf: " + error.message);
       }
     });
   }
 });
+
 
 
 
@@ -333,9 +321,13 @@ async function postKauf(daten) {
 // Käufe laden und anzeigen
 async function updateKaeufe() {
   try {
-    const res = await fetch('/api/kaeufe');
-    if (!res.ok) throw new Error('Fehler beim Laden der Käufe');
-    const kaeufe = await res.json();
+    const res = await fetch('/api/portfolio-und-kaeufe');
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Fehler beim Laden der Käufe, Status: ${res.status}, Antwort: ${text}`);
+    }
+    const data = await res.json();
+    const kaeufe = data.kaeufe;
 
     const tbody = document.querySelector('#kaeufeTable tbody');
     tbody.innerHTML = '';
@@ -347,6 +339,8 @@ async function updateKaeufe() {
         <td>${kauf.anzahl}</td>
         <td>${kauf.preis}</td>
         <td>${kauf.kaufdatum}</td>
+        <td>${kauf.differenz !== null ? kauf.differenz.toFixed(2) : ''}</td>
+        <td>${kauf.kommentar || ''}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -354,6 +348,7 @@ async function updateKaeufe() {
     console.error('Fehler beim Aktualisieren der Käufe:', error);
   }
 }
+
 
 // Portfolio laden und anzeigen
 async function updatePortfolio() {
@@ -398,7 +393,7 @@ async function kaufeUndAktualisiere(data) {
     updatePortfolioTable(json.portfolio);
 
     // Käufe Tabelle aktualisieren
-    updateKaeufe(json.kaeufe);
+    updateKaeufeTable(json.kaeufe)
 
   } catch (error) {
     console.error('Fehler:', error);
@@ -407,6 +402,10 @@ async function kaufeUndAktualisiere(data) {
 
 function updatePortfolioTable(portfolio) {
   const tbody = document.querySelector('#portfolioTable tbody');
+  if (!tbody) {
+    console.warn('Kein #portfolioTable tbody gefunden, updatePortfolioTable wird abgebrochen');
+    return;
+  }
   tbody.innerHTML = ''; // alles löschen
   portfolio.forEach(eintrag => {
     const tr = document.createElement('tr');
@@ -414,30 +413,59 @@ function updatePortfolioTable(portfolio) {
       <td>${eintrag.coin}</td>
       <td>${eintrag.im_besitz}</td>
       <td>${eintrag.durchschnittseinkaufspreis.toFixed(2)} €</td>
-      <td>${eintrag.aktueller_wert ?? '–'}</td>
-      <td>${eintrag.gewinn_brutto ?? '–'}</td>
-      <td class="price-cell" data-coin="${eintrag.coin}">${eintrag.kurs_eur ?? '–'}</td>
-      <td>${eintrag.kurs_usd ?? '–'}</td>
+      <td>${eintrag.aktueller_wert !== undefined ? eintrag.aktueller_wert.toFixed(2) + ' €' : '–'}</td>
+      <td>${eintrag.gewinn_brutto !== undefined ? eintrag.gewinn_brutto.toFixed(2) + ' €' : '–'}</td>
+      <td class="price-cell" data-coin="${eintrag.coin}">${eintrag.kurs_eur !== undefined ? eintrag.kurs_eur.toFixed(2) + ' €' : '–'}</td>
+      <td>${eintrag.kurs_usd !== undefined ? eintrag.kurs_usd.toFixed(2) + ' $' : '–'}</td>
     `;
+
+    // Farbe für Gewinn/Verlust setzen
+    if (eintrag.gewinn_brutto !== undefined) {
+      if (eintrag.gewinn_brutto > 0) {
+        tr.cells[4].style.color = "green";
+      } else if (eintrag.gewinn_brutto < 0) {
+        tr.cells[4].style.color = "red";
+      } else {
+        tr.cells[4].style.color = "black";
+      }
+    }
+
     tbody.appendChild(tr);
   });
 }
 
 function updateKaeufeTable(kaeufe) {
   const tbody = document.querySelector('#kaeufeTable tbody');
+  if (!tbody) {
+    console.warn('Kein #kaeufeTable tbody gefunden, updateKaeufeTable wird abgebrochen');
+    return;
+  }
   tbody.innerHTML = '';
   kaeufe.forEach(kauf => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${kauf.coin}</td>
       <td>${kauf.anzahl}</td>
-      <td>${kauf.preis}</td>
+      <td>${kauf.preis.toFixed(2)} €</td>
       <td>${kauf.kaufdatum}</td>
-      <td>${eintrag.kommentar || '–'}</td> <!-- 💬 NEU: Kommentar -->
+      <td>${kauf.differenz !== undefined ? kauf.differenz.toFixed(2) + ' €' : '–'}</td>
+      <td>${kauf.kommentar || '–'}</td>
     `;
+    // Farbgebung je nach Differenz
+    if (kauf.differenz !== undefined) {
+      if (kauf.differenz > 0) {
+        tr.style.color = "green";
+      } else if (kauf.differenz < 0) {
+        tr.style.color = "red";
+      } else {
+        tr.style.color = "black";
+      }
+    }
     tbody.appendChild(tr);
   });
 }
+
+
 
 
 
