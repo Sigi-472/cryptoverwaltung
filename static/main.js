@@ -333,13 +333,17 @@ async function updateKaeufe() {
     tbody.innerHTML = '';
 
     kaeufe.forEach(kauf => {
+      const differenzText = (typeof kauf.differenz === 'number') 
+        ? kauf.differenz.toFixed(2) + ' €' 
+        : '';
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${kauf.coin}</td>
         <td>${kauf.anzahl}</td>
-        <td>${kauf.preis}</td>
+        <td>${kauf.preis.toFixed(2)} €</td>
         <td>${kauf.kaufdatum}</td>
-        <td>${kauf.differenz !== null ? kauf.differenz.toFixed(2) : ''}</td>
+        <td>${differenzText}</td>
         <td>${kauf.kommentar || ''}</td>
       `;
       tbody.appendChild(tr);
@@ -352,6 +356,7 @@ async function updateKaeufe() {
     console.error('Fehler beim Aktualisieren der Käufe:', error);
   }
 }
+
 
 
 // Portfolio laden und anzeigen
@@ -447,22 +452,24 @@ function updateKaeufeTable(kaeufe) {
   }
   tbody.innerHTML = '';
   kaeufe.forEach(kauf => {
-    const tr = document.createElement('tr');
+    const differenzText = typeof kauf.differenz === 'number' ? kauf.differenz.toFixed(2) + ' €' : '–';
+    tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${kauf.coin}</td>
       <td>${kauf.anzahl}</td>
       <td>${kauf.preis.toFixed(2)} €</td>
       <td>${kauf.kaufdatum}</td>
-      <td>${kauf.differenz !== undefined ? kauf.differenz.toFixed(2) + ' €' : '–'}</td>
+      <td>${differenzText}</td>
       <td>${kauf.kommentar || '–'}</td>
     `;
-    tbody.appendChild(tr); // zuerst anhängen
+    tbody.appendChild(tr);
   });
 
   console.log('Vor dem Aufruf von colorize_kaeufe_table');
   colorize_kaeufe_table();
   console.log('Nach dem Aufruf von colorize_kaeufe_table');
 }
+
 
 
 
