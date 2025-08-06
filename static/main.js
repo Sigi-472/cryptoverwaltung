@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
         anzahl: parseFloat(document.getElementById("sellAmountInput").value),
         verkaufspreis: parseFloat(document.getElementById("sellPriceInput").value),
         verkaufsdatum: document.getElementById("sellDateInput").value,
-        kommentar: document.getElementById("buyDateInput").value,
+        kommentar: document.getElementById("sellCommentInput").value,
       };
 
       try {

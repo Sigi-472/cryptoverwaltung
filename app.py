@@ -419,6 +419,7 @@ def add_verkauf():
         anzahl = float(data['anzahl'])
         verkaufspreis = float(data['verkaufspreis'])
         verkaufsdatum_str = data['verkaufsdatum']
+        kommentar = data.get("kommentar", "")  # 🟢 NEU
 
         from datetime import datetime
         verkaufsdatum = datetime.strptime(verkaufsdatum_str, '%Y-%m-%d').date()
@@ -430,7 +431,8 @@ def add_verkauf():
             coin=coin,
             anzahl=-anzahl,
             preis=verkaufspreis,
-            kaufdatum=verkaufsdatum
+            kaufdatum=verkaufsdatum,
+            kommentar=kommentar  # 🟢 NEU
         )
         session.add(verkauf_eintrag)
 
@@ -448,7 +450,6 @@ def add_verkauf():
 
         portfolio_eintrag.im_besitz -= anzahl
 
-        # Wenn nichts mehr im Besitz, löschen
         if portfolio_eintrag.im_besitz <= 0:
             session.delete(portfolio_eintrag)
 
