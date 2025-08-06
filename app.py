@@ -419,72 +419,83 @@ def add_verkauf():
         anzahl = float(data['anzahl'])
         verkaufspreis = float(data['verkaufspreis'])
         verkaufsdatum_str = data['verkaufsdatum']
-        kommentar = data.get("kommentar", "")  # 🟢 NEU
+        kommentar = data.get("kommentar", "")
 
         from datetime import datetime
         verkaufsdatum = datetime.strptime(verkaufsdatum_str, '%Y-%m-%d').date()
 
         session = Session()
 
-        # Verkauf als negativer KaufEintrag speichern
+        # Portfolio prüfen
+        portfolio_eintrag = session.query(PortfolioEintrag).filter_by(coin=coin).first()
+        if not portfolio_eintrag:
+            session.close()
+            return jsonify({'error': 'Coin nicht im Portfolio'}), 400
+
+        if portfolio_eintrag.im_besitz < anzahl:
+            session.close()
+            return jsonify({'error': 'Nicht genügend Coins zum Verkauf'}), 400
+
+        # Kaufeinträge (positive anzahl) nach Kaufdatum sortiert laden (FIFO)
+        offene_kaeufe = (
+            session.query(KaufEintrag)
+            .filter(
+                KaufEintrag.coin == coin,
+                KaufEintrag.anzahl > 0
+            )
+            .order_by(KaufEintrag.kaufdatum.asc(), KaufEintrag.id.asc())
+            .all()
+        )
+
+        rest_anzahl = anzahl
+        einkaufskosten = 0.0
+
+        for kauf in offene_kaeufe:
+            if rest_anzahl <= 0:
+                break
+
+            verwendete_anzahl = min(kauf.anzahl, rest_anzahl)
+            einkaufskosten += verwendete_anzahl * kauf.preis
+
+            # Kauf-Anzahl reduzieren
+            kauf.anzahl -= verwendete_anzahl
+            rest_anzahl -= verwendete_anzahl
+
+        if rest_anzahl > 0:
+            # Sollte nicht passieren, da Portfolio geprüft wurde
+            session.rollback()
+            session.close()
+            return jsonify({'error': 'Nicht genügend Käufe vorhanden für Verkauf'}), 400
+
+        # Differenz berechnen
+        gesamter_verkaufspreis = anzahl * verkaufspreis
+        differenz = gesamter_verkaufspreis - einkaufskosten
+
+        # Verkauf als negativer KaufEintrag mit Differenz speichern
         verkauf_eintrag = KaufEintrag(
             coin=coin,
             anzahl=-anzahl,
             preis=verkaufspreis,
             kaufdatum=verkaufsdatum,
-            kommentar=kommentar  # 🟢 NEU
+            differenz=differenz,
+            kommentar=kommentar
         )
         session.add(verkauf_eintrag)
 
         # Portfolio anpassen
-        portfolio_eintrag = session.query(PortfolioEintrag).filter_by(coin=coin).first()
-        if not portfolio_eintrag:
-            session.rollback()
-            session.close()
-            return jsonify({'error': 'Coin nicht im Portfolio'}), 400
-
-        if portfolio_eintrag.im_besitz < anzahl:
-            session.rollback()
-            session.close()
-            return jsonify({'error': 'Nicht genügend Coins zum Verkauf'}), 400
-
         portfolio_eintrag.im_besitz -= anzahl
-
         if portfolio_eintrag.im_besitz <= 0:
             session.delete(portfolio_eintrag)
 
         session.commit()
         session.close()
 
-        return jsonify({'message': 'Verkauf gespeichert'}), 200
+        return jsonify({'message': 'Verkauf gespeichert', 'differenz': differenz}), 200
 
     except Exception as e:
         session.rollback()
         session.close()
         return jsonify({'error': str(e)}), 500
-
-def is_admin_user(session=None) -> bool:
-    if session is None:
-        session = Session()
-
-    if not current_user.is_authenticated:
-        session.close()
-        return False
-
-    try:
-        user = session.query(User).options(joinedload(User.roles)).filter_by(id=current_user.id).one_or_none()
-        if user is None:
-            print(f"is_admin_user: user {current_user.id} not found")
-            session.close()
-            return False
-
-        roles = [role.name for role in user.roles]
-        session.close()
-        return 'admin' in roles
-    except Exception as e:
-        print(f"is_admin_user: error: {e}")
-        session.close()
-        return False
 
 def admin_required(f):
     @wraps(f)

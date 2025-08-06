@@ -171,8 +171,8 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(daten),
         });
 
-        console.log("Status:", res.status);
         const text = await res.text();
+        console.log("Status:", res.status);
         console.log("Response Text:", text);
 
         if (!res.ok) throw new Error(`Server Fehler: ${text}`);
@@ -180,6 +180,10 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           const json = JSON.parse(text);
           console.log("Response JSON:", json);
+
+          if (json.differenz !== undefined) {
+            alert(`Verkauf gespeichert! Gewinn/Verlust: ${json.differenz.toFixed(2)} €`);
+          }
         } catch {
           console.warn("Antwort kein JSON");
         }
