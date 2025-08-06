@@ -456,4 +456,6 @@ async function fetchEurToUsdRate() {
 setInterval(updatePrices, 10000);
 updatePrices();
 
-colorize_kaeufe_table();
+$(document).ready(function () {
+  colorize_kaeufe_table();
+});
