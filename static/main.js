@@ -171,8 +171,7 @@ async function saveSellBtnClick(event) {
     if (checkJson.steuerpflichtig > 0) {
       const msg = `⚠️ Du möchtest ${checkJson.gesamt_menge} ${daten.coin} verkaufen.\n` +
                   `Davon sind ${checkJson.steuerfrei} steuerfrei und ${checkJson.steuerpflichtig} steuerpflichtig.\n\n` +
-                  `⚠️ Für den steuerpflichtigen Anteil könnten Steuern anfallen.\n\n` +
-                  `Gib "ja" oder "y" ein, um fortzufahren. Alles andere bricht ab.`;
+                  `⚠️ Für den steuerpflichtigen Anteil könnten Steuern anfallen.\n\n`;
 
       const eingabe = confirm(msg);
 
