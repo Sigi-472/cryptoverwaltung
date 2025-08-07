@@ -19,22 +19,24 @@
     <table id="kaeufeTable">
       <thead>
         <tr>
+          <th>Kauf/Verkaufdatum</th>
+          <th>Aktion</th> <!-- NEU -->
           <th>Coin</th>
           <th>Anzahl</th>
           <th>Einkauf/Verkaufspreis (€)</th>
-          <th>Kauf/Verkaufdatum</th>
           <th>Differenz (€)</th>
           <th>Kommentar</th>
-          <th>Aktion</th> <!-- NEU -->
+
         </tr>
       </thead>
       <tbody>
         {% for eintrag in kaeufe %}
         <tr>
+          <td>{{ eintrag.kaufdatum.strftime('%d.%m.%Y') }}</td>
+          <td>{{ eintrag.aktion }}</td>
           <td>{{ eintrag.coin }}</td>
           <td>{{ eintrag.anzahl }}</td>
           <td>{{ "{:.2f}".format(eintrag.preis) }}</td>
-          <td>{{ eintrag.kaufdatum.strftime('%d.%m.%Y') }}</td>
           <td>
             {% if eintrag.differenz is not none %}
             {{ "{:.2f}".format(eintrag.differenz) }}
@@ -43,7 +45,6 @@
             {% endif %}
           </td>
           <td>{{ eintrag.kommentar or '-' }}</td>
-          <td>{{ eintrag.aktion }}</td> <!-- NEU -->
         </tr>
         {% else %}
         <tr>

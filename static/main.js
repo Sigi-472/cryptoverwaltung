@@ -37,7 +37,7 @@ fetch('/api/get_sigils')
 
 setInterval(() => fetchPrice("BTC"), 10000);
 
-if($("#portfolioTable").length) {
+if ($("#portfolioTable").length) {
   var rows = document.querySelectorAll("table tbody tr");
 
   rows.forEach((row) => {
@@ -56,33 +56,33 @@ window.addEventListener('DOMContentLoaded', () => {
   fetchEurToUsdRate();
 });
 
-async function saveBtnClick (event) {
-	event.preventDefault();
+async function saveBtnClick(event) {
+  event.preventDefault();
 
   const form = event.target.parentElement;
-  
-	if (!form) return;
 
-	const daten = {
-		coin: document.getElementById("coinSelect").value,
-		im_besitz: parseFloat(document.getElementById("amountInput").value),
-		durchschnittseinkaufspreis: parseFloat(
-			document.getElementById("priceInput").value
-		),
-		kaufdatum: document.getElementById("buyDateInput").value,
-		kommentar: document.getElementById("buyCommentInput").value,
-	};
+  if (!form) return;
 
-	try {
-		await kaufeUndAktualisiere(daten);  // Hier wird die Käufe + Portfolio Tabelle aktualisiert
+  const daten = {
+    coin: document.getElementById("coinSelect").value,
+    im_besitz: parseFloat(document.getElementById("amountInput").value),
+    durchschnittseinkaufspreis: parseFloat(
+      document.getElementById("priceInput").value
+    ),
+    kaufdatum: document.getElementById("buyDateInput").value,
+    kommentar: document.getElementById("buyCommentInput").value,
+  };
+
+  try {
+    await kaufeUndAktualisiere(daten);  // Hier wird die Käufe + Portfolio Tabelle aktualisiert
     await updatePortfolio(); // Portfolio Tabelle aktualisieren
     await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
 
-		form.reset();
-		form.style.display = "none";
-	} catch (error) {
-		alert("❌ Fehler beim Kauf: " + error.message);
-	}
+    form.reset();
+    form.style.display = "none";
+  } catch (error) {
+    alert("❌ Fehler beim Kauf: " + error.message);
+  }
 }
 
 
@@ -170,8 +170,8 @@ async function saveSellBtnClick(event) {
     // Schritt 2: Prüfen auf steuerpflichtige Anteile
     if (checkJson.steuerpflichtig > 0) {
       const msg = `⚠️ Du möchtest ${checkJson.gesamt_menge} ${daten.coin} verkaufen.\n` +
-                  `Davon sind ${checkJson.steuerfrei} steuerfrei und ${checkJson.steuerpflichtig} steuerpflichtig.\n\n` +
-                  `⚠️ Für den steuerpflichtigen Anteil könnten Steuern anfallen.\n\n`;
+        `Davon sind ${checkJson.steuerfrei} steuerfrei und ${checkJson.steuerpflichtig} steuerpflichtig.\n\n` +
+        `⚠️ Für den steuerpflichtigen Anteil könnten Steuern anfallen.\n\n`;
 
       const eingabe = confirm(msg);
 
@@ -256,7 +256,7 @@ async function updatePriceInDOM(coin, price) {
     rows.forEach((row) => {
       const tds = row.querySelectorAll("td");
       if (tds.length < 7) return;
-      
+
       const rowCoin = tds[0].textContent.trim().toUpperCase();
       if (rowCoin === coin) {
         const kursUSD = price / eurToUsd;
@@ -298,7 +298,7 @@ async function updateKaeufe() {
     const data = await res.json();
     const kaeufe = data.kaeufe;
 
-    if($("#kaeufeTable").length == 0) {
+    if ($("#kaeufeTable").length == 0) {
       console.warn("#kaeufeTabelle nicht gefunden")
       return;
     }
@@ -307,19 +307,19 @@ async function updateKaeufe() {
     tbody.innerHTML = '';
 
     kaeufe.forEach(kauf => {
-      const differenzText = (typeof kauf.differenz === 'number') 
-        ? kauf.differenz.toFixed(2) + ' €' 
+      const differenzText = (typeof kauf.differenz === 'number')
+        ? kauf.differenz.toFixed(2) + ' €'
         : '';
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
+        <td>${kauf.kaufdatum}</td>
+        <td>${kauf.aktion}</td>
         <td>${kauf.coin}</td>
         <td>${kauf.anzahl}</td>
         <td>${kauf.preis.toFixed(2)} €</td>
-        <td>${kauf.kaufdatum}</td>
         <td>${differenzText}</td>
-        <td>${kauf.kommentar || ''}</td>
-        <td>${kauf.aktion}</td>
+        <td>${kauf.kommentar || '–'}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -429,13 +429,13 @@ function updateKaeufeTable(kaeufe) {
     const differenzText = typeof kauf.differenz === 'number' ? kauf.differenz.toFixed(2) + ' €' : '–';
     tr = document.createElement('tr');
     tr.innerHTML = `
+      <td>${kauf.kaufdatum}</td>
+      <td>${kauf.aktion}</td>
       <td>${kauf.coin}</td>
       <td>${kauf.anzahl}</td>
       <td>${kauf.preis.toFixed(2)} €</td>
-      <td>${kauf.kaufdatum}</td>
       <td>${differenzText}</td>
       <td>${kauf.kommentar || '–'}</td>
-      <td>${kauf.aktion}</td> <!-- NEU -->
     `;
     tbody.appendChild(tr);
   });
