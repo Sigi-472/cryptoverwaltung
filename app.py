@@ -409,6 +409,17 @@ def get_portfolio_und_kaeufe():
     finally:
         session.close()
 
+def berechne_durchschnittspreis(session, user_id, coin):
+    offene_kaeufe = session.query(KaufEintrag).filter(
+        KaufEintrag.user_id == user_id,
+        KaufEintrag.coin == coin,
+        KaufEintrag.rest_anzahl > 0
+    ).all()
+    gesamt_menge = sum(k.rest_anzahl for k in offene_kaeufe)
+    if gesamt_menge == 0:
+        return 0
+    gesamt_kosten = sum(k.rest_anzahl * k.preis for k in offene_kaeufe)
+    return gesamt_kosten / gesamt_menge
 
 
 @app.route('/api/verkauf', methods=['POST'])
@@ -440,15 +451,37 @@ def add_verkauf():
         verkauf_eintrag = erstelle_verkaufseintrag(verkaufsdaten, differenz)
         session.add(verkauf_eintrag)
 
+        # Portfolio aktualisieren: Menge anpassen
         aktualisiere_portfolio(session, portfolio_eintrag, verkaufsdaten['anzahl'])
 
+        # NEU: Durchschnittspreis neu berechnen auf Basis der restlichen Coins
+        neuer_durchschnitt = berechne_durchschnittspreis(session, current_user.id, verkaufsdaten['coin'])
+        portfolio_eintrag.durchschnittseinkaufspreis = neuer_durchschnitt
+
         session.commit()
-        return jsonify({'message': 'Verkauf gespeichert', 'differenz': differenz}), 200
+        return jsonify({
+            'message': 'Verkauf gespeichert',
+            'differenz': differenz,
+            'neuer_durchschnitt': neuer_durchschnitt
+        }), 200
 
     except Exception as e:
         session.rollback()
         return jsonify({'error': str(e)}), 500
 
+    finally:
+        session.close()
+
+@app.route('/api/durchschnittspreis/<coin>', methods=['GET'])
+@login_required
+def get_durchschnittspreis(coin):
+    session = Session()
+    try:
+        # Berechnung der durchschnittlichen Einkaufspreises für den eingeloggten User
+        durchschnitt = berechne_durchschnittspreis(session, current_user.id, coin.upper())
+        return jsonify({'coin': coin.upper(), 'durchschnittspreis': durchschnitt}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     finally:
         session.close()
 

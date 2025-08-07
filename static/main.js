@@ -1,9 +1,9 @@
-const currentPrices = {};
-let eurToUsd = 1.10;
+var currentPrices = {};
+var eurToUsd = 1.10;
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Globale Variablen !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-const rows = document.querySelectorAll("table tbody tr");
+var rows = document.querySelectorAll("table tbody tr");
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -219,53 +219,57 @@ async function updatePrices() {
     }
   }
 }
-
-function updatePriceInDOM(coin, price) {
-  const priceElement = document.getElementById(`${coin.toLowerCase()}-price`);
-  if (priceElement) {
-    priceElement.textContent = price.toFixed(2) + " €";
-  }
-
-  const rows = document.querySelectorAll("#portfolioTable tbody tr");
-  rows.forEach((row) => {
-    const tds = row.querySelectorAll("td");
-    if (tds.length < 7) {
-      // Nicht genug Spalten, nichts machen
-      return;
-    }
-    const rowCoin = tds[0].textContent.trim().toUpperCase();
-    if (rowCoin === coin) {
-      const kursUSD = price / eurToUsd;
-      tds[5].textContent = kursUSD.toFixed(2) + " €";
-
-      console.log("USD Kurs aktualisieren" + price);
-      tds[6].textContent = price.toFixed(2) + " $";
-
-      const durchschnittspreis = parseFloat(tds[2].textContent.replace(",", "."));
-      tds[2].textContent = durchschnittspreis.toFixed(2) + " €";
-
-      const imBesitz = parseFloat(tds[1].textContent.replace(",", "."));
-
-      const aktuellerWert = kursUSD * imBesitz;
-      tds[3].textContent = aktuellerWert.toFixed(2) + " €";
-
-      const einkaufswert = imBesitz * durchschnittspreis;
-      const gewinn = aktuellerWert - einkaufswert;
-      tds[4].textContent = gewinn.toFixed(2) + " €";
-
-      if (gewinn > 0) {
-        tds[4].style.color = "green";
-      } else if (gewinn < 0) {
-        tds[4].style.color = "red";
-      } else {
-        tds[4].style.color = "black";
-      }
-
-
-
-    }
-  });
+async function fetchDurchschnittspreis(coin) {
+  const response = await fetch(`/api/durchschnittspreis/${coin}`);
+  if (!response.ok) throw new Error('Fehler beim Laden des Durchschnittspreises');
+  const data = await response.json();
+  return data.durchschnittspreis;
 }
+
+async function updatePriceInDOM(coin, price) {
+  try {
+    const durchschnittspreis = await fetchDurchschnittspreis(coin);
+
+    const priceElement = document.getElementById(`${coin.toLowerCase()}-price`);
+    if (priceElement) {
+      priceElement.textContent = price.toFixed(2) + " €";
+    }
+
+    const rows = document.querySelectorAll("#portfolioTable tbody tr");
+    rows.forEach((row) => {
+      const tds = row.querySelectorAll("td");
+      if (tds.length < 7) return;
+      
+      const rowCoin = tds[0].textContent.trim().toUpperCase();
+      if (rowCoin === coin) {
+        const kursUSD = price / eurToUsd;
+        tds[5].textContent = kursUSD.toFixed(2) + " €";
+        tds[6].textContent = price.toFixed(2) + " $";
+
+        tds[2].textContent = durchschnittspreis.toFixed(2) + " €";
+
+        const imBesitz = parseFloat(tds[1].textContent.replace(",", "."));
+        const aktuellerWert = kursUSD * imBesitz;
+        tds[3].textContent = aktuellerWert.toFixed(2) + " €";
+
+        const einkaufswert = imBesitz * durchschnittspreis;
+        const gewinn = aktuellerWert - einkaufswert;
+        tds[4].textContent = gewinn.toFixed(2) + " €";
+
+        if (gewinn > 0) {
+          tds[4].style.color = "green";
+        } else if (gewinn < 0) {
+          tds[4].style.color = "red";
+        } else {
+          tds[4].style.color = "black";
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des Preises:', error);
+  }
+}
+
 
 function colorize_kaeufe_table() {
   var trs = $("#kaeufeTable").find("tr");
@@ -328,6 +332,11 @@ async function updateKaeufe() {
     }
     const data = await res.json();
     const kaeufe = data.kaeufe;
+
+    if($("#kaeufeTable").length == 0) {
+      console.warn("#kaeufeTabelle nicht gefunden")
+      return;
+    }
 
     const tbody = document.querySelector('#kaeufeTable tbody');
     tbody.innerHTML = '';
@@ -408,7 +417,6 @@ async function kaufeUndAktualisiere(data) {
     console.error('Fehler:', error);
   }
 }
-
 function updatePortfolioTable(portfolio) {
   const tbody = document.querySelector('#portfolioTable tbody');
   if (!tbody) {
@@ -418,18 +426,19 @@ function updatePortfolioTable(portfolio) {
   tbody.innerHTML = ''; // alles löschen
   portfolio.forEach(eintrag => {
     const tr = document.createElement('tr');
+
     tr.innerHTML = `
       <td>${eintrag.coin}</td>
       <td>${eintrag.im_besitz}</td>
-      <td>${eintrag.durchschnittseinkaufspreis.toFixed(2)} €</td>
-      <td>${eintrag.aktueller_wert !== undefined ? eintrag.aktueller_wert.toFixed(2) + ' €' : '–'}</td>
-      <td>${eintrag.gewinn_brutto !== undefined ? eintrag.gewinn_brutto.toFixed(2) + ' €' : '–'}</td>
-      <td class="price-cell" data-coin="${eintrag.coin}">${eintrag.kurs_eur !== undefined ? eintrag.kurs_eur.toFixed(2) + ' €' : '–'}</td>
-      <td>${eintrag.kurs_usd !== undefined ? eintrag.kurs_usd.toFixed(2) + ' $' : '–'}</td>
+      <td>${Number.isFinite(eintrag.durchschnittseinkaufspreis) ? eintrag.durchschnittseinkaufspreis.toFixed(2) + ' €' : '–'}</td>
+      <td>${Number.isFinite(eintrag.aktueller_wert) ? eintrag.aktueller_wert.toFixed(2) + ' €' : '–'}</td>
+      <td>${Number.isFinite(eintrag.gewinn_brutto) ? eintrag.gewinn_brutto.toFixed(2) + ' €' : '–'}</td>
+      <td class="price-cell" data-coin="${eintrag.coin}">${Number.isFinite(eintrag.kurs_eur) ? eintrag.kurs_eur.toFixed(2) + ' €' : '–'}</td>
+      <td>${Number.isFinite(eintrag.kurs_usd) ? eintrag.kurs_usd.toFixed(2) + ' $' : '–'}</td>
     `;
 
     // Farbe für Gewinn/Verlust setzen
-    if (eintrag.gewinn_brutto !== undefined) {
+    if (Number.isFinite(eintrag.gewinn_brutto)) {
       if (eintrag.gewinn_brutto > 0) {
         tr.cells[4].style.color = "green";
       } else if (eintrag.gewinn_brutto < 0) {
@@ -442,6 +451,7 @@ function updatePortfolioTable(portfolio) {
     tbody.appendChild(tr);
   });
 }
+
 
 function updateKaeufeTable(kaeufe) {
   console.log('updateKaeufeTable wurde aufgerufen', kaeufe);
