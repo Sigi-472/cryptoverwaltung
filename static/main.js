@@ -324,6 +324,7 @@ async function updateKaeufe() {
         <td>${kauf.kaufdatum}</td>
         <td>${differenzText}</td>
         <td>${kauf.kommentar || ''}</td>
+        <td>${kauf.aktion}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -441,6 +442,7 @@ function updateKaeufeTable(kaeufe) {
       <td>${kauf.kaufdatum}</td>
       <td>${differenzText}</td>
       <td>${kauf.kommentar || '–'}</td>
+      <td>${kauf.aktion}</td> <!-- NEU -->
     `;
     tbody.appendChild(tr);
   });
