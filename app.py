@@ -59,7 +59,7 @@ sigils = [
 ]
 
 # Jetzt die importierten Module verwenden
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, send_from_directory
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, send_from_directory, abort
 import requests
 from flask_cors import CORS
 from sqlalchemy import create_engine, Column, Integer, Float, String, Date, Boolean, ForeignKey, Table
@@ -138,6 +138,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/Mein_Portfolio')
+@login_required
 def mein_portfolio():
     session = Session()
     eintraege = session.query(PortfolioEintrag).all()
@@ -145,6 +146,7 @@ def mein_portfolio():
     return render_template('Mein_Portfolio.html', eintraege=eintraege)
 
 @app.route('/Transaktionen')
+@login_required
 def transaktionen():
     session = Session()
     kaeufe = session.query(KaufEintrag).all()
@@ -152,21 +154,34 @@ def transaktionen():
     
     return render_template('Transaktionen.html', kaeufe=kaeufe)
 
+
 @app.route('/delete/<int:id>')
+@login_required
 def delete_entry(id):
     session = Session()
     eintrag = session.query(PortfolioEintrag).get(id)
-    if eintrag:
-        session.delete(eintrag)
-        session.commit()
+    
+    if not eintrag:
+        session.close()
+        abort(404)  # Eintrag nicht gefunden
+
+    if eintrag.user_id != current_user.id:
+        session.close()
+        abort(403)  # Zugriff verweigert – nicht dein Eintrag!
+
+    session.delete(eintrag)
+    session.commit()
     session.close()
+    
     return redirect(url_for('mein_portfolio'))
 
 @app.route("/api/get_sigils")
+@login_required
 def get_sigils():
     return jsonify(sigils)
 
 @app.route('/api/update_price', methods=['POST'])
+@login_required
 def update_price():
     data = request.json
     coin = data.get('coin')
@@ -183,6 +198,7 @@ def update_price():
     return jsonify({'status': 'ok'})
 
 @app.route('/api/portfolio', methods=['POST'])
+@login_required
 def add_portfolio():
     data = request.get_json()
     print("📥 Portfolio POST erhalten:", data)
@@ -223,6 +239,7 @@ def add_portfolio():
         session.close()
 
 @app.route('/api/price')
+@login_required
 def api_price():
     coin = request.args.get('coin')
     if not coin:
@@ -265,6 +282,7 @@ def api_price():
 
 
 @app.route('/api/kauf-und-portfolio', methods=['POST'])
+@login_required
 def kauf_und_portfolio():
     data = request.get_json()
     if not data:
@@ -320,6 +338,7 @@ def kauf_und_portfolio():
     
 
 @app.route('/api/portfolio-und-kaeufe', methods=['GET'])
+@login_required
 def get_portfolio_und_kaeufe():
     session = Session()
     try:
@@ -357,6 +376,7 @@ def get_portfolio_und_kaeufe():
 
 
 @app.route('/api/verkauf', methods=['POST'])
+@login_required
 def add_verkauf():
     session = Session()
     data = request.get_json()
