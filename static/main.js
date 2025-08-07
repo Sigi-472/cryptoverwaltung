@@ -294,34 +294,6 @@ function colorize_kaeufe_table() {
   }
 }
 
-async function postKauf(daten) {
-  const res = await fetch("/api/kauf-und-portfolio", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(daten),
-  });
-
-  if (!res.ok) {
-    // Versuche, Fehlermeldung als JSON zu lesen
-    let errMsg = "Unbekannter Fehler";
-    try {
-      const errData = await res.json();
-      errMsg = errData.error || errMsg;
-    } catch {
-      // Falls kein JSON zurückkommt, ignorieren
-    }
-    throw new Error(errMsg);
-  }
-
-  // Antwort als JSON lesen
-  try {
-    return await res.json();
-  } catch {
-    // Falls keine JSON-Antwort, einfach return
-    return;
-  }
-}
-
 // Käufe laden und anzeigen
 async function updateKaeufe() {
   try {
@@ -391,9 +363,9 @@ async function Aktualisiere(data) {
   try {
     // Kauf speichern
     let res = await fetch('/api/kauf-und-portfolio', {
-      method: 'GET',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      //body: JSON.stringify(data)
+      body: JSON.stringify(data)
     });
 
     if (!res.ok) throw new Error('Fehler beim Speichern des Kaufs');

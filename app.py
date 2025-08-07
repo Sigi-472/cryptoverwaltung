@@ -306,58 +306,71 @@ def api_price():
 
 
 
-@app.route('/api/kauf-und-portfolio', methods=['POST'])
+@app.route('/api/kauf-und-portfolio', methods=['POST', 'GET'])
 @login_required
 def kauf_und_portfolio():
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'Keine Daten empfangen'}), 400
-
     session = Session()
     try:
-        coin = data['coin'].upper()
-        anzahl = float(data['im_besitz'])
-        preis = float(data['durchschnittseinkaufspreis'])
-        kaufdatum = datetime.strptime(data['kaufdatum'], '%Y-%m-%d').date()
-        kommentar = data.get('kommentar')
+        if request.method == 'POST':
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'Keine Daten empfangen'}), 400
 
-        # ✅ KaufEintrag mit user_id speichern
-        kauf = KaufEintrag(
-            coin=coin,
-            anzahl=anzahl,
-            preis=preis,
-            kaufdatum=kaufdatum,
-            kommentar=kommentar,
-            rest_anzahl=anzahl,
-            user_id=current_user.id
-        )
-        session.add(kauf)
+            coin = data['coin'].upper()
+            anzahl = float(data['im_besitz'])
+            preis = float(data['durchschnittseinkaufspreis'])
+            kaufdatum = datetime.strptime(data['kaufdatum'], '%Y-%m-%d').date()
+            kommentar = data.get('kommentar')
 
-        # ✅ PortfolioEintrag nur für aktuellen User abfragen
-        eintrag = session.query(PortfolioEintrag).filter_by(
-            coin=coin,
-            user_id=current_user.id
-        ).first()
-
-        if eintrag:
-            gesamt_anzahl = eintrag.im_besitz + anzahl
-            neuer_durchschnitt = (
-                (eintrag.durchschnittseinkaufspreis * eintrag.im_besitz) + (preis * anzahl)
-            ) / gesamt_anzahl if gesamt_anzahl != 0 else 0
-
-            eintrag.im_besitz = gesamt_anzahl
-            eintrag.durchschnittseinkaufspreis = neuer_durchschnitt
-        else:
-            eintrag = PortfolioEintrag(
+            # KaufEintrag speichern
+            kauf = KaufEintrag(
                 coin=coin,
-                im_besitz=anzahl,
-                durchschnittseinkaufspreis=preis,
+                anzahl=anzahl,
+                preis=preis,
+                kaufdatum=kaufdatum,
+                kommentar=kommentar,
+                rest_anzahl=anzahl,
                 user_id=current_user.id
             )
-            session.add(eintrag)
+            session.add(kauf)
 
-        session.commit()
-        return jsonify({'message': 'Kauf und Portfolio erfolgreich gespeichert'}), 200
+            # PortfolioEintrag abfragen und anpassen
+            eintrag = session.query(PortfolioEintrag).filter_by(
+                coin=coin,
+                user_id=current_user.id
+            ).first()
+
+            if eintrag:
+                gesamt_anzahl = eintrag.im_besitz + anzahl
+                neuer_durchschnitt = (
+                    (eintrag.durchschnittseinkaufspreis * eintrag.im_besitz) + (preis * anzahl)
+                ) / gesamt_anzahl if gesamt_anzahl != 0 else 0
+
+                eintrag.im_besitz = gesamt_anzahl
+                eintrag.durchschnittseinkaufspreis = neuer_durchschnitt
+            else:
+                eintrag = PortfolioEintrag(
+                    coin=coin,
+                    im_besitz=anzahl,
+                    durchschnittseinkaufspreis=preis,
+                    user_id=current_user.id
+                )
+                session.add(eintrag)
+
+            session.commit()
+            return jsonify({'message': 'Kauf und Portfolio erfolgreich gespeichert'}), 200
+
+        elif request.method == 'GET':
+            # Nur Portfolio-Einträge für aktuellen User abfragen
+            portfolio = session.query(PortfolioEintrag).filter_by(user_id=current_user.id).all()
+            result = []
+            for eintrag in portfolio:
+                result.append({
+                    'coin': eintrag.coin,
+                    'im_besitz': eintrag.im_besitz,
+                    'durchschnittseinkaufspreis': eintrag.durchschnittseinkaufspreis
+                })
+            return jsonify(result), 200
 
     except Exception as e:
         session.rollback()
@@ -365,7 +378,6 @@ def kauf_und_portfolio():
 
     finally:
         session.close()
-
 
 @app.route('/api/portfolio-und-kaeufe', methods=['GET'])
 @login_required
