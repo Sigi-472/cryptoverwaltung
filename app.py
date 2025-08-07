@@ -494,6 +494,52 @@ def add_verkauf():
     finally:
         session.close()
 
+def is_admin_user(session=None) -> bool:
+    if session is None:
+        session = Session()
+
+    if not current_user.is_authenticated:
+        session.close()
+        return False
+
+    try:
+        user = session.query(User).options(joinedload(User.roles)).filter_by(id=current_user.id).one_or_none()
+        if user is None:
+            print(f"is_admin_user: user {current_user.id} not found")
+            session.close()
+            return False
+
+        roles = [role.name for role in user.roles]
+        session.close()
+        return 'admin' in roles
+    except Exception as e:
+        print(f"is_admin_user: error: {e}")
+        session.close()
+        return False
+
+def is_admin_user(session=None) -> bool:
+    if session is None:
+        session = Session()
+
+    if not current_user.is_authenticated:
+        session.close()
+        return False
+
+    try:
+        user = session.query(User).options(joinedload(User.roles)).filter_by(id=current_user.id).one_or_none()
+        if user is None:
+            print(f"is_admin_user: user {current_user.id} not found")
+            session.close()
+            return False
+
+        roles = [role.name for role in user.roles]
+        session.close()
+        return 'admin' in roles
+    except Exception as e:
+        print(f"is_admin_user: error: {e}")
+        session.close()
+        return False
+
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
