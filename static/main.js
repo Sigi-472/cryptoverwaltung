@@ -133,58 +133,57 @@ $(function () {
     });
   }
 
-  if (saveSellBtn) {
-    saveSellBtn.addEventListener("click", async (event) => {
-      event.preventDefault();
-
-      if (!sellForm) return;
-
-      const daten = {
-        coin: document.getElementById("sellCoinInput").value,
-        anzahl: parseFloat(document.getElementById("sellAmountInput").value),
-        verkaufspreis: parseFloat(document.getElementById("sellPriceInput").value),
-        verkaufsdatum: document.getElementById("sellDateInput").value,
-        kommentar: document.getElementById("sellCommentInput").value,
-      };
-
-      try {
-        const res = await fetch("/api/verkauf", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(daten),
-        });
-
-        const text = await res.text();
-        console.log("Status:", res.status);
-        console.log("Response Text:", text);
-
-        if (!res.ok) throw new Error(`Server Fehler: ${text}`);
-
-        try {
-          const json = JSON.parse(text);
-          console.log("Response JSON:", json);
-
-          if (json.differenz !== undefined) {
-            alert(`Verkauf gespeichert! Gewinn/Verlust: ${json.differenz.toFixed(2)} €`);
-          }
-        } catch {
-          console.warn("Antwort kein JSON");
-        }
-
-        sellForm.reset();
-        sellForm.style.display = "none";
-
-        await updatePortfolio(); // Nur Portfolio Tabelle aktualisieren, Käufe nicht
-        await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
-
-      } catch (error) {
-        alert("❌ Fehler beim Verkauf: " + error.message);
-      }
-    });
-  }
 });
 
+async function saveSellBtnClick (event) {
+  event.preventDefault();
 
+  const sellForm = event.target.parentElement;
+
+  if (!sellForm) return;
+
+  const daten = {
+    coin: document.getElementById("sellCoinInput").value,
+    anzahl: parseFloat(document.getElementById("sellAmountInput").value),
+    verkaufspreis: parseFloat(document.getElementById("sellPriceInput").value),
+    verkaufsdatum: document.getElementById("sellDateInput").value,
+    kommentar: document.getElementById("sellCommentInput").value,
+  };
+
+  try {
+    const res = await fetch("/api/verkauf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(daten),
+    });
+
+    const text = await res.text();
+    console.log("Status:", res.status);
+    console.log("Response Text:", text);
+
+    if (!res.ok) throw new Error(`Server Fehler: ${text}`);
+
+    try {
+      const json = JSON.parse(text);
+      console.log("Response JSON:", json);
+
+      if (json.differenz !== undefined) {
+        alert(`Verkauf gespeichert! Gewinn/Verlust: ${json.differenz.toFixed(2)} €`);
+      }
+    } catch {
+      console.warn("Antwort kein JSON");
+    }
+
+    sellForm.reset();
+    sellForm.style.display = "none";
+
+    await updatePortfolio(); // Nur Portfolio Tabelle aktualisieren, Käufe nicht
+    await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
+
+  } catch (error) {
+    alert("❌ Fehler beim Verkauf: " + error.message);
+  }
+}
 
 
 async function updatePrices() {
