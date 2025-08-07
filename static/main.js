@@ -3,7 +3,6 @@ var eurToUsd = 1.10;
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Globale Variablen !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-var rows = document.querySelectorAll("table tbody tr");
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -38,15 +37,19 @@ fetch('/api/get_sigils')
 
 setInterval(() => fetchPrice("BTC"), 10000);
 
-rows.forEach((row) => {
-  const coin = row.querySelector("td:first-child").textContent.trim();
+if($("#portfolioTable").length) {
+  var rows = document.querySelectorAll("table tbody tr");
 
-  const r = row.querySelectorAll("td");
-  if (r.length >= 5) {
-    const kursEURZelle = r[5];
-    kursEURZelle.textContent = currentPrices[coin];
-  }
-});
+  rows.forEach((row) => {
+    const coin = row.querySelector("td:first-child").textContent.trim();
+
+    const r = row.querySelectorAll("td");
+    if (r.length >= 5) {
+      const kursEURZelle = r[5];
+      kursEURZelle.textContent = currentPrices[coin];
+    }
+  });
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 window.addEventListener('DOMContentLoaded', () => {
@@ -268,30 +271,6 @@ async function updatePriceInDOM(coin, price) {
   }
 }
 
-
-function colorize_kaeufe_table() {
-  var trs = $("#kaeufeTable").find("tr");
-
-  if (trs.length) {
-    trs.each(function () {
-      var tds = $(this).find("td");
-      if (tds.length) {
-        var anzahl = parseFloat($(tds[1]).text());
-
-        if (anzahl > 0) {
-          $(tds).css("color", "green");
-        } else if (anzahl < 0) {
-          $(tds).css("color", "red");
-        } else if (isNaN(anzahl)) {
-          //
-        } else {
-          $(tds).css("color", "black");
-        }
-      }
-    });
-  }
-}
-
 // Käufe laden und anzeigen
 async function updateKaeufe() {
   try {
@@ -328,9 +307,6 @@ async function updateKaeufe() {
       `;
       tbody.appendChild(tr);
     });
-
-    // Farben nach dem Befüllen setzen
-    colorize_kaeufe_table();
 
   } catch (error) {
     console.error('Fehler beim Aktualisieren der Käufe:', error);
@@ -388,6 +364,7 @@ async function kaufeUndAktualisiere(data) {
     console.error('Fehler:', error);
   }
 }
+
 function updatePortfolioTable(portfolio) {
   const tbody = document.querySelector('#portfolioTable tbody');
   if (!tbody) {
@@ -446,10 +423,6 @@ function updateKaeufeTable(kaeufe) {
     `;
     tbody.appendChild(tr);
   });
-
-  console.log('Vor dem Aufruf von colorize_kaeufe_table');
-  colorize_kaeufe_table();
-  console.log('Nach dem Aufruf von colorize_kaeufe_table');
 }
 
 
@@ -481,7 +454,3 @@ async function fetchEurToUsdRate() {
 
 setInterval(updatePrices, 10000);
 updatePrices();
-
-$(document).ready(function () {
-  colorize_kaeufe_table();
-});
