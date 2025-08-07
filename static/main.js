@@ -56,7 +56,9 @@ window.addEventListener('DOMContentLoaded', () => {
 async function saveBtnClick (event) {
 	event.preventDefault();
 
-	//if (!form) return;
+  const form = event.target.parentElement;
+  
+	if (!form) return;
 
 	const daten = {
 		coin: document.getElementById("coinSelect").value,
@@ -73,12 +75,11 @@ async function saveBtnClick (event) {
 		await updatePortfolio(); // Portfolio Tabelle aktualisieren
 		await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
 
-		//form.reset();
-		//form.style.display = "none";
+		form.reset();
+		form.style.display = "none";
 	} catch (error) {
 		alert("❌ Fehler beim Kauf: " + error.message);
 	}
-	saveBtn.dataset.listenerAttached = "true";
 }
 
 
