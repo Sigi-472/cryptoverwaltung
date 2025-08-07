@@ -150,10 +150,6 @@ def mein_portfolio():
 def transaktionen():
     session = Session()
     kaeufe = session.query(KaufEintrag).filter_by(user_id=current_user.id).all()
-    
-    for kauf in kaeufe:
-        print(f"ID: {kauf.id}, Coin: {kauf.coin}, Kommentar: {repr(kauf.kommentar)}")
-    
     session.close()
 
     return render_template('Transaktionen.html', kaeufe=kaeufe)
