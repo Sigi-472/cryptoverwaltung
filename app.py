@@ -396,7 +396,8 @@ def get_portfolio_und_kaeufe():
                 'preis': k.preis,
                 'kaufdatum': k.kaufdatum.strftime('%Y-%m-%d'),
                 'differenz': getattr(k, 'differenz', None),
-                'kommentar': getattr(k, 'kommentar', '')
+                'kommentar': getattr(k, 'kommentar', ''),
+                'aktion': getattr(k, 'aktion', '')
             }
             for k in kaeufe
         ]

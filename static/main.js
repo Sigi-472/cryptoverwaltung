@@ -72,8 +72,8 @@ async function saveBtnClick (event) {
 
 	try {
 		await kaufeUndAktualisiere(daten);  // Hier wird die Käufe + Portfolio Tabelle aktualisiert
-		await updatePortfolio(); // Portfolio Tabelle aktualisieren
-		await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
+    await updatePortfolio(); // Portfolio Tabelle aktualisieren
+    await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
 
 		form.reset();
 		form.style.display = "none";
