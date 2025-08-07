@@ -220,9 +220,14 @@ def add_portfolio():
         neu_im_besitz = data['im_besitz']
         neu_preis = data['durchschnittseinkaufspreis']
 
-        eintrag = session.query(PortfolioEintrag).filter_by(coin=coin).first()
+        # 🔍 Nur Eintrag für aktuellen User
+        eintrag = session.query(PortfolioEintrag).filter_by(
+            coin=coin,
+            user_id=current_user.id
+        ).first()
 
         if eintrag:
+            # 🧮 Berechne neuen Durchschnitt
             gesamt_anzahl = eintrag.im_besitz + neu_im_besitz
             neuer_durchschnitt = (
                 (eintrag.durchschnittseinkaufspreis * eintrag.im_besitz) +
@@ -232,10 +237,12 @@ def add_portfolio():
             eintrag.im_besitz = gesamt_anzahl
             eintrag.durchschnittseinkaufspreis = neuer_durchschnitt
         else:
+            # ➕ Neuen Eintrag mit user_id anlegen
             eintrag = PortfolioEintrag(
                 coin=coin,
                 im_besitz=neu_im_besitz,
-                durchschnittseinkaufspreis=neu_preis
+                durchschnittseinkaufspreis=neu_preis,
+                user_id=current_user.id
             )
             session.add(eintrag)
 
@@ -247,6 +254,7 @@ def add_portfolio():
     finally:
         session.close()
 
+
 @app.route('/api/price')
 @login_required
 def api_price():
@@ -255,25 +263,35 @@ def api_price():
         return jsonify({'error': 'Kein Coin angegeben'}), 400
 
     coin = coin.upper()
-    api_urls = {}
-
-    for coin_sigil in sigils:
-        api_urls[coin_sigil] = f'https://api.coinbase.com/v2/prices/{coin_sigil}-USD/spot'
+    api_urls = {
+        sigil: f'https://api.coinbase.com/v2/prices/{sigil}-USD/spot'
+        for sigil in sigils
+    }
 
     if coin not in api_urls:
         return jsonify({'error': f'Preis für {coin} nicht verfügbar'}), 404
 
     try:
+        # 💸 Preis von Coinbase abrufen
         response = requests.get(api_urls[coin])
         data = response.json()
         price = float(data['data']['amount'])
 
+        # 🔐 Nur Einträge des aktuellen Users updaten
         session = Session()
-        eintraege = session.query(PortfolioEintrag).filter_by(coin=coin).all()
+        eintraege = session.query(PortfolioEintrag).filter_by(
+            coin=coin,
+            user_id=current_user.id
+        ).all()
+
         for eintrag in eintraege:
             eintrag.kurs_eur = price
             eintrag.aktueller_wert = price * eintrag.im_besitz
-            eintrag.gewinn_brutto = eintrag.aktueller_wert - (eintrag.im_besitz * eintrag.durchschnittseinkaufspreis)
+            eintrag.gewinn_brutto = (
+                eintrag.aktueller_wert -
+                (eintrag.im_besitz * eintrag.durchschnittseinkaufspreis)
+            )
+
         session.commit()
         session.close()
 
@@ -282,8 +300,6 @@ def api_price():
     except Exception as e:
         print(f"Fehler beim Abruf/Aktualisieren des Preises für {coin}: {e}")
         return jsonify({'error': 'Fehler beim Abruf oder Datenbankupdate'}), 500
-
-
 
 
 
@@ -303,21 +319,26 @@ def kauf_und_portfolio():
         anzahl = float(data['im_besitz'])
         preis = float(data['durchschnittseinkaufspreis'])
         kaufdatum = datetime.strptime(data['kaufdatum'], '%Y-%m-%d').date()
-        kommentar = data.get('kommentar')  # ✅ Kommentar optional auslesen
+        kommentar = data.get('kommentar')
 
-        # Kauf in Tabelle 'kaeufe' speichern
+        # ✅ KaufEintrag mit user_id speichern
         kauf = KaufEintrag(
             coin=coin,
             anzahl=anzahl,
             preis=preis,
             kaufdatum=kaufdatum,
-            kommentar=kommentar,  # ✅ Kommentar speichern
-            rest_anzahl=anzahl,  # <-- hier ergänzen!
+            kommentar=kommentar,
+            rest_anzahl=anzahl,
+            user_id=current_user.id
         )
         session.add(kauf)
 
-        # Portfolio aktualisieren oder neuen Eintrag anlegen
-        eintrag = session.query(PortfolioEintrag).filter_by(coin=coin).first()
+        # ✅ PortfolioEintrag nur für aktuellen User abfragen
+        eintrag = session.query(PortfolioEintrag).filter_by(
+            coin=coin,
+            user_id=current_user.id
+        ).first()
+
         if eintrag:
             gesamt_anzahl = eintrag.im_besitz + anzahl
             neuer_durchschnitt = (
@@ -330,7 +351,8 @@ def kauf_und_portfolio():
             eintrag = PortfolioEintrag(
                 coin=coin,
                 im_besitz=anzahl,
-                durchschnittseinkaufspreis=preis
+                durchschnittseinkaufspreis=preis,
+                user_id=current_user.id
             )
             session.add(eintrag)
 
@@ -344,43 +366,48 @@ def kauf_und_portfolio():
     finally:
         session.close()
 
-    
 
 @app.route('/api/portfolio-und-kaeufe', methods=['GET'])
 @login_required
 def get_portfolio_und_kaeufe():
     session = Session()
     try:
-        kaeufe = session.query(KaufEintrag).all()
-        portfolio = session.query(PortfolioEintrag).all()
+        # 🔐 Nur Daten des aktuellen Benutzers laden
+        kaeufe = session.query(KaufEintrag).filter_by(user_id=current_user.id).all()
+        portfolio = session.query(PortfolioEintrag).filter_by(user_id=current_user.id).all()
 
-        # Daten in dicts umwandeln (für JSON)
+        # 🧾 Käufe umwandeln
         kaeufe_data = [
             {
                 'coin': k.coin,
                 'anzahl': k.anzahl,
                 'preis': k.preis,
                 'kaufdatum': k.kaufdatum.strftime('%Y-%m-%d'),
-                'differenz': getattr(k, 'differenz', None),     # <-- hinzufügen
-                'kommentar': getattr(k, 'kommentar', '')        # <-- hinzufügen
-            } for k in kaeufe
+                'differenz': getattr(k, 'differenz', None),
+                'kommentar': getattr(k, 'kommentar', '')
+            }
+            for k in kaeufe
         ]
+
+        # 📊 Portfolio umwandeln
         portfolio_data = [
             {
                 'coin': p.coin,
                 'im_besitz': p.im_besitz,
                 'durchschnittseinkaufspreis': p.durchschnittseinkaufspreis,
-                'aktueller_wert': p.aktueller_wert,   # Falls berechnet
-                'gewinn_brutto': p.gewinn_brutto,     # Falls berechnet
+                'aktueller_wert': p.aktueller_wert,
+                'gewinn_brutto': p.gewinn_brutto,
                 'kurs_eur': p.kurs_eur,
                 'kurs_usd': p.kurs_usd,
                 'id': p.id
-            } for p in portfolio
+            }
+            for p in portfolio
         ]
+
         return jsonify({'kaeufe': kaeufe_data, 'portfolio': portfolio_data})
+
     finally:
         session.close()
-
 
 
 
@@ -393,43 +420,39 @@ def add_verkauf():
         return jsonify({'error': 'Keine Daten empfangen'}), 400
 
     try:
-        coin = data['coin']
+        coin = data['coin'].upper()
         anzahl = float(data['anzahl'])
         verkaufspreis = float(data['verkaufspreis'])
-        verkaufsdatum_str = data['verkaufsdatum']
+        verkaufsdatum = datetime.strptime(data['verkaufsdatum'], '%Y-%m-%d').date()
         kommentar = data.get("kommentar", "")
         rest_anzahl = anzahl
 
-        from datetime import datetime
-        verkaufsdatum = datetime.strptime(verkaufsdatum_str, '%Y-%m-%d').date()
+        # 🔐 Portfolio prüfen – nur vom aktuellen Nutzer
+        portfolio_eintrag = session.query(PortfolioEintrag).filter_by(
+            coin=coin,
+            user_id=current_user.id
+        ).first()
 
-        # Portfolio prüfen
-        portfolio_eintrag = session.query(PortfolioEintrag).filter_by(coin=coin).first()
         if not portfolio_eintrag:
             return jsonify({'error': 'Coin nicht im Portfolio'}), 400
 
         if portfolio_eintrag.im_besitz < anzahl:
             return jsonify({'error': 'Nicht genügend Coins zum Verkauf'}), 400
 
-        # Kaufeinträge (FIFO) laden
+        # 🔐 Kaufeinträge (FIFO) nur vom aktuellen Nutzer laden
         offene_kaeufe = session.query(KaufEintrag).filter(
             KaufEintrag.coin == coin,
+            KaufEintrag.user_id == current_user.id,
             KaufEintrag.rest_anzahl > 0
         ).order_by(KaufEintrag.kaufdatum.asc(), KaufEintrag.id.asc()).all()
 
-        rest_anzahl = anzahl
         einkaufskosten = 0.0
-
         for kauf in offene_kaeufe:
             if rest_anzahl <= 0:
                 break
 
             verwendete_anzahl = min(kauf.rest_anzahl, rest_anzahl)
-
-            # Einkaufskosten berechnen
             einkaufskosten += verwendete_anzahl * kauf.preis
-
-            # Kaufeintrag aktualisieren
             kauf.rest_anzahl -= verwendete_anzahl
             rest_anzahl -= verwendete_anzahl
 
@@ -440,18 +463,20 @@ def add_verkauf():
         gesamter_verkaufspreis = anzahl * verkaufspreis
         differenz = gesamter_verkaufspreis - einkaufskosten
 
-        # Verkauf speichern
+        # ✅ Verkauf als negativer Kauf speichern, mit user_id
         verkauf_eintrag = KaufEintrag(
             coin=coin,
             anzahl=-anzahl,
             preis=verkaufspreis,
             kaufdatum=verkaufsdatum,
+            kommentar=kommentar,
             differenz=differenz,
-            kommentar=kommentar
+            rest_anzahl=0,
+            user_id=current_user.id
         )
         session.add(verkauf_eintrag)
 
-        # Portfolio aktualisieren
+        # ✅ Portfolio aktualisieren
         portfolio_eintrag.im_besitz -= anzahl
         if portfolio_eintrag.im_besitz <= 0:
             session.delete(portfolio_eintrag)
