@@ -53,10 +53,37 @@ window.addEventListener('DOMContentLoaded', () => {
   fetchEurToUsdRate();
 });
 
+async function saveBtnClick (event) {
+	event.preventDefault();
+
+	//if (!form) return;
+
+	const daten = {
+		coin: document.getElementById("coinSelect").value,
+		im_besitz: parseFloat(document.getElementById("amountInput").value),
+		durchschnittseinkaufspreis: parseFloat(
+			document.getElementById("priceInput").value
+		),
+		kaufdatum: document.getElementById("buyDateInput").value,
+		kommentar: document.getElementById("buyCommentInput").value,
+	};
+
+	try {
+		await kaufeUndAktualisiere(daten);  // Hier wird die Käufe + Portfolio Tabelle aktualisiert
+		await updatePortfolio(); // Portfolio Tabelle aktualisieren
+		await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
+
+		//form.reset();
+		//form.style.display = "none";
+	} catch (error) {
+		alert("❌ Fehler beim Kauf: " + error.message);
+	}
+	saveBtn.dataset.listenerAttached = "true";
+}
 
 
 
-document.addEventListener("DOMContentLoaded", () => {
+$(function () {
   const form = document.getElementById("form_id");
   const sellForm = document.getElementById("sell_form_id");
 
@@ -83,35 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (form) {
         form.reset();
         form.style.display = "none";
-      }
-    });
-  }
-
-  if (saveBtn) {
-    saveBtn.addEventListener("click", async (event) => {
-      event.preventDefault();
-
-      if (!form) return;
-
-      const daten = {
-        coin: document.getElementById("coinSelect").value,
-        im_besitz: parseFloat(document.getElementById("amountInput").value),
-        durchschnittseinkaufspreis: parseFloat(
-          document.getElementById("priceInput").value
-        ),
-        kaufdatum: document.getElementById("buyDateInput").value,
-        kommentar: document.getElementById("buyCommentInput").value,
-      };
-
-      try {
-        await Aktualisiere(daten);  // Hier wird die Käufe + Portfolio Tabelle aktualisiert
-        await updatePortfolio(); // Portfolio Tabelle aktualisieren
-        await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
-
-        form.reset();
-        form.style.display = "none";
-      } catch (error) {
-        alert("❌ Fehler beim Kauf: " + error.message);
       }
     });
   }
@@ -359,7 +357,7 @@ async function updatePortfolio() {
 
 
 
-async function Aktualisiere(data) {
+async function kaufeUndAktualisiere(data) {
   try {
     // Kauf speichern
     let res = await fetch('/api/kauf-und-portfolio', {
