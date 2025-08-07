@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       try {
-        await kaufeUndAktualisiere(daten);  // Hier wird die Käufe + Portfolio Tabelle aktualisiert
+        await Aktualisiere(daten);  // Hier wird die Käufe + Portfolio Tabelle aktualisiert
         await updatePortfolio(); // Portfolio Tabelle aktualisieren
         await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
 
@@ -387,13 +387,13 @@ async function updatePortfolio() {
 
 
 
-async function kaufeUndAktualisiere(data) {
+async function Aktualisiere(data) {
   try {
     // Kauf speichern
     let res = await fetch('/api/kauf-und-portfolio', {
-      method: 'POST',
+      method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      //body: JSON.stringify(data)
     });
 
     if (!res.ok) throw new Error('Fehler beim Speichern des Kaufs');
