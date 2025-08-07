@@ -174,9 +174,9 @@ async function saveSellBtnClick(event) {
                   `⚠️ Für den steuerpflichtigen Anteil könnten Steuern anfallen.\n\n` +
                   `Gib "ja" oder "y" ein, um fortzufahren. Alles andere bricht ab.`;
 
-      const eingabe = prompt(msg);
+      const eingabe = confirm(msg);
 
-      if (!eingabe || !["ja", "Ja", "JA", "y", "Y", "yes", "YES"].includes(eingabe.trim())) {
+      if (!eingabe) {
         alert("❌ Verkauf abgebrochen – steuerpflichtiger Anteil nicht bestätigt.");
         return;
       }
@@ -205,42 +205,6 @@ async function saveSellBtnClick(event) {
     alert("❌ Fehler beim Verkauf: " + error.message);
   }
 }
-
-
-function zeigeSteuerwarnung(steuerfrei, steuerpflichtig) {
-  return new Promise((resolve) => {
-    const modal = document.getElementById("steuerwarnungModal");
-    const text = document.getElementById("steuerwarnungText");
-    const confirmBtn = document.getElementById("confirmTaxableSaleBtn");
-    const cancelBtn = document.getElementById("cancelTaxableSaleBtn");
-
-    text.textContent = `Du möchtest ${steuerfrei + steuerpflichtig} Coins verkaufen.
-Davon sind ${steuerfrei} steuerfrei und ${steuerpflichtig} steuerpflichtig.
-Willst du trotzdem fortfahren?`;
-
-    modal.style.display = "block";
-
-    const cleanup = () => {
-      modal.style.display = "none";
-      confirmBtn.removeEventListener("click", onConfirm);
-      cancelBtn.removeEventListener("click", onCancel);
-    };
-
-    const onConfirm = () => {
-      cleanup();
-      resolve(true);
-    };
-
-    const onCancel = () => {
-      cleanup();
-      resolve(false);
-    };
-
-    confirmBtn.addEventListener("click", onConfirm);
-    cancelBtn.addEventListener("click", onCancel);
-  });
-}
-
 
 async function updatePrices() {
   const priceCells = document.querySelectorAll(".price-cell");
