@@ -167,9 +167,9 @@ async function saveSellBtnClick (event) {
       const json = JSON.parse(text);
       console.log("Response JSON:", json);
 
-      if (json.differenz !== undefined) {
-        alert(`Verkauf gespeichert! Gewinn/Verlust: ${json.differenz.toFixed(2)} €`);
-      }
+      //if (json.differenz !== undefined) {
+      //  alert(`Verkauf gespeichert! Gewinn/Verlust: ${json.differenz.toFixed(2)} €`);
+      //}
     } catch {
       console.warn("Antwort kein JSON");
     }
