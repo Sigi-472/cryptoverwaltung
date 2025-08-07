@@ -461,6 +461,7 @@ def add_verkauf():
         differenz = berechne_differenz(verkaufsdaten['anzahl'], verkaufsdaten['verkaufspreis'], einkaufskosten)
 
         verkauf_eintrag = erstelle_verkaufseintrag(verkaufsdaten, differenz)
+        verkauf_eintrag.aktion = "verkauf"
         session.add(verkauf_eintrag)
 
         # Portfolio aktualisieren: Menge anpassen
@@ -549,6 +550,7 @@ def erstelle_verkaufseintrag(daten, differenz):
         kommentar=daten['kommentar'],
         differenz=differenz,
         rest_anzahl=0,
+        aktion="verkauf",  # <--- hier direkt setzen
         user_id=current_user.id
     )
 

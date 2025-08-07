@@ -66,6 +66,7 @@ class KaufEintrag(Base):
     differenz = Column(Float, nullable=True) 
     kommentar = Column(String, nullable=True) 
     rest_anzahl = Column(Float, nullable=True)  # Neue Spalte hier
+    aktion = Column(String(10), nullable=False, default="kauf")
 
     user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="kaeufer")

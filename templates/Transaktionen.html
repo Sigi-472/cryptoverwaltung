@@ -23,8 +23,9 @@
           <th>Anzahl</th>
           <th>Einkauf/Verkaufspreis (€)</th>
           <th>Kauf/Verkaufdatum</th>
-          <th>Differenz (€)</th> <!-- NEU -->
-          <th>Kommentar</th> <!-- NEU -->
+          <th>Differenz (€)</th>
+          <th>Kommentar</th>
+          <th>Aktion</th> <!-- NEU -->
         </tr>
       </thead>
       <tbody>
@@ -42,14 +43,17 @@
             {% endif %}
           </td>
           <td>{{ eintrag.kommentar or '-' }}</td>
+          <td>{{ eintrag.aktion }}</td> <!-- NEU -->
         </tr>
         {% else %}
         <tr>
-          <td colspan="6">Keine Käufe vorhanden.</td>
+          <td colspan="7">Keine Käufe vorhanden.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+
+
 
   </div>
   </div>
