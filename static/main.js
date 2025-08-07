@@ -359,25 +359,43 @@ async function kaufeUndAktualisiere(data) {
       body: JSON.stringify(data)
     });
 
-    if (!res.ok) throw new Error('Fehler beim Speichern des Kaufs');
-
     let result = await res.json();
+
+    if (!res.ok) {
+      // Fehlertext ausgeben, falls vorhanden
+      if (result.error) {
+        alert(`Fehler beim Speichern des Kaufs:\n${result.error}`);
+      } else {
+        alert('Fehler beim Speichern des Kaufs.');
+      }
+      throw new Error(result.error || 'Unbekannter Fehler beim Speichern');
+    }
+
     console.log(result.message);
 
     // Dann Portfolio + Käufe laden
     res = await fetch('/api/portfolio-und-kaeufe');
-    if (!res.ok) throw new Error('Fehler beim Laden von Portfolio und Käufen');
-
     const json = await res.json();
+
+    if (!res.ok) {
+      if (json.error) {
+        alert(`Fehler beim Laden von Portfolio und Käufen:\n${json.error}`);
+      } else {
+        alert('Fehler beim Laden von Portfolio und Käufen.');
+      }
+      throw new Error(json.error || 'Unbekannter Fehler beim Laden');
+    }
 
     // Portfolio Tabelle aktualisieren
     updatePortfolioTable(json.portfolio);
 
     // Käufe Tabelle aktualisieren
-    updateKaeufeTable(json.kaeufe)
+    updateKaeufeTable(json.kaeufe);
 
   } catch (error) {
     console.error('Fehler:', error);
+    // Optional: catch alert falls andere Fehler auftreten
+    alert(`Ein Fehler ist aufgetreten:\n${error.message}`);
   }
 }
 

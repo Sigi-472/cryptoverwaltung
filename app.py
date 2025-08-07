@@ -313,8 +313,18 @@ def kauf_und_portfolio():
     try:
         if request.method == 'POST':
             data = request.get_json()
+
             if not data:
                 return jsonify({'error': 'Keine Daten empfangen'}), 400
+            
+            if "kaufdatum" not in data:
+                return jsonify({'error': 'Kaufdatum wurde nicht mitgesendet.'}), 400
+
+            if data["kaufdatum"] is None:
+                return jsonify({'error': 'Kaufdatum war None.'}), 400
+
+            if data["kaufdatum"] == "":
+                return jsonify({'error': 'Kaufdatum war leerer String. Das kann vorkommen bei invaliden Datumsangaben, so wie dem 31. Februar.'}), 400
 
             coin = data['coin'].upper()
             anzahl = float(data['im_besitz'])
