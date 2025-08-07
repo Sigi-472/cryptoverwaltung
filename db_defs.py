@@ -29,6 +29,9 @@ class User(UserMixin, Base):
         back_populates="users"
     )
 
+    portfolios = relationship("PortfolioEintrag", back_populates="user", cascade="all, delete-orphan")
+    kaeufer = relationship("KaufEintrag", back_populates="user", cascade="all, delete-orphan")
+
 class Role(Base):
     __tablename__ = 'role'
     id = Column(Integer, primary_key=True)
@@ -50,6 +53,9 @@ class PortfolioEintrag(Base):
     kurs_eur = Column(Float)
     kurs_usd = Column(Float)
 
+    user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
+    user = relationship("User", back_populates="portfolios")
+
 class KaufEintrag(Base):
     __tablename__ = 'kaeufe'
     id = Column(Integer, primary_key=True)
@@ -60,3 +66,6 @@ class KaufEintrag(Base):
     differenz = Column(Float, nullable=True) 
     kommentar = Column(String, nullable=True) 
     rest_anzahl = Column(Float, nullable=True)  # Neue Spalte hier
+
+    user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
+    user = relationship("User", back_populates="kaeufer")
