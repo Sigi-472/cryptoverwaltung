@@ -420,66 +420,27 @@ def add_verkauf():
         return jsonify({'error': 'Keine Daten empfangen'}), 400
 
     try:
-        coin = data['coin'].upper()
-        anzahl = float(data['anzahl'])
-        verkaufspreis = float(data['verkaufspreis'])
-        verkaufsdatum = datetime.strptime(data['verkaufsdatum'], '%Y-%m-%d').date()
-        kommentar = data.get("kommentar", "")
-        rest_anzahl = anzahl
-
-        # 🔐 Portfolio prüfen – nur vom aktuellen Nutzer
-        portfolio_eintrag = session.query(PortfolioEintrag).filter_by(
-            coin=coin,
-            user_id=current_user.id
-        ).first()
-
+        verkaufsdaten = parse_verkaufsdaten(data)
+        portfolio_eintrag = finde_portfolio_eintrag(session, verkaufsdaten['coin'])
         if not portfolio_eintrag:
             return jsonify({'error': 'Coin nicht im Portfolio'}), 400
 
-        if portfolio_eintrag.im_besitz < anzahl:
+        if portfolio_eintrag.im_besitz < verkaufsdaten['anzahl']:
             return jsonify({'error': 'Nicht genügend Coins zum Verkauf'}), 400
 
-        # 🔐 Kaufeinträge (FIFO) nur vom aktuellen Nutzer laden
-        offene_kaeufe = session.query(KaufEintrag).filter(
-            KaufEintrag.coin == coin,
-            KaufEintrag.user_id == current_user.id,
-            KaufEintrag.rest_anzahl > 0
-        ).order_by(KaufEintrag.kaufdatum.asc(), KaufEintrag.id.asc()).all()
+        offene_kaeufe = lade_offene_kaeufe(session, verkaufsdaten['coin'])
+        einkaufskosten, erfolgreich = berechne_einkaufskosten(offene_kaeufe, verkaufsdaten['anzahl'])
 
-        einkaufskosten = 0.0
-        for kauf in offene_kaeufe:
-            if rest_anzahl <= 0:
-                break
-
-            verwendete_anzahl = min(kauf.rest_anzahl, rest_anzahl)
-            einkaufskosten += verwendete_anzahl * kauf.preis
-            kauf.rest_anzahl -= verwendete_anzahl
-            rest_anzahl -= verwendete_anzahl
-
-        if rest_anzahl > 0:
+        if not erfolgreich:
             session.rollback()
             return jsonify({'error': 'Nicht genügend Käufe vorhanden für Verkauf'}), 400
 
-        gesamter_verkaufspreis = anzahl * verkaufspreis
-        differenz = gesamter_verkaufspreis - einkaufskosten
+        differenz = berechne_differenz(verkaufsdaten['anzahl'], verkaufsdaten['verkaufspreis'], einkaufskosten)
 
-        # ✅ Verkauf als negativer Kauf speichern, mit user_id
-        verkauf_eintrag = KaufEintrag(
-            coin=coin,
-            anzahl=-anzahl,
-            preis=verkaufspreis,
-            kaufdatum=verkaufsdatum,
-            kommentar=kommentar,
-            differenz=differenz,
-            rest_anzahl=0,
-            user_id=current_user.id
-        )
+        verkauf_eintrag = erstelle_verkaufseintrag(verkaufsdaten, differenz)
         session.add(verkauf_eintrag)
 
-        # ✅ Portfolio aktualisieren
-        portfolio_eintrag.im_besitz -= anzahl
-        if portfolio_eintrag.im_besitz <= 0:
-            session.delete(portfolio_eintrag)
+        aktualisiere_portfolio(session, portfolio_eintrag, verkaufsdaten['anzahl'])
 
         session.commit()
         return jsonify({'message': 'Verkauf gespeichert', 'differenz': differenz}), 200
@@ -490,6 +451,66 @@ def add_verkauf():
 
     finally:
         session.close()
+
+
+# 💡 Hilfsfunktionen
+
+def parse_verkaufsdaten(data):
+    return {
+        'coin': data['coin'].upper(),
+        'anzahl': float(data['anzahl']),
+        'verkaufspreis': float(data['verkaufspreis']),
+        'verkaufsdatum': datetime.strptime(data['verkaufsdatum'], '%Y-%m-%d').date(),
+        'kommentar': data.get("kommentar", "")
+    }
+
+def finde_portfolio_eintrag(session, coin):
+    return session.query(PortfolioEintrag).filter_by(
+        coin=coin,
+        user_id=current_user.id
+    ).first()
+
+def lade_offene_kaeufe(session, coin):
+    return session.query(KaufEintrag).filter(
+        KaufEintrag.coin == coin,
+        KaufEintrag.user_id == current_user.id,
+        KaufEintrag.rest_anzahl > 0
+    ).order_by(KaufEintrag.kaufdatum.asc(), KaufEintrag.id.asc()).all()
+
+def berechne_einkaufskosten(kaeufe, anzahl):
+    rest_anzahl = anzahl
+    einkaufskosten = 0.0
+
+    for kauf in kaeufe:
+        if rest_anzahl <= 0:
+            break
+        verwendete_anzahl = min(kauf.rest_anzahl, rest_anzahl)
+        einkaufskosten += verwendete_anzahl * kauf.preis
+        kauf.rest_anzahl -= verwendete_anzahl
+        rest_anzahl -= verwendete_anzahl
+
+    erfolgreich = rest_anzahl <= 0
+    return einkaufskosten, erfolgreich
+
+def berechne_differenz(anzahl, verkaufspreis, einkaufskosten):
+    return anzahl * verkaufspreis - einkaufskosten
+
+def erstelle_verkaufseintrag(daten, differenz):
+    return KaufEintrag(
+        coin=daten['coin'],
+        anzahl=-daten['anzahl'],
+        preis=daten['verkaufspreis'],
+        kaufdatum=daten['verkaufsdatum'],
+        kommentar=daten['kommentar'],
+        differenz=differenz,
+        rest_anzahl=0,
+        user_id=current_user.id
+    )
+
+def aktualisiere_portfolio(session, eintrag, anzahl):
+    eintrag.im_besitz -= anzahl
+    if eintrag.im_besitz <= 0:
+        session.delete(eintrag)
 
 def is_admin_user(session=None) -> bool:
     if session is None:
