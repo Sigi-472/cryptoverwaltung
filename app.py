@@ -141,7 +141,7 @@ def index():
 @login_required
 def mein_portfolio():
     session = Session()
-    eintraege = session.query(PortfolioEintrag).all()
+    eintraege = session.query(PortfolioEintrag).filter_by(user_id=current_user.id).all()
     session.close()
     return render_template('Mein_Portfolio.html', eintraege=eintraege)
 
@@ -149,7 +149,7 @@ def mein_portfolio():
 @login_required
 def transaktionen():
     session = Session()
-    kaeufe = session.query(KaufEintrag).all()
+    kaeufe = session.query(KaufEintrag).filter_by(user_id=current_user.id).all()
     session.close()
     
     return render_template('Transaktionen.html', kaeufe=kaeufe)
@@ -180,19 +180,28 @@ def delete_entry(id):
 def get_sigils():
     return jsonify(sigils)
 
+
+
 @app.route('/api/update_price', methods=['POST'])
 @login_required
 def update_price():
     data = request.json
     coin = data.get('coin')
     kurs_eur = data.get('kurs_eur')
+
     if not coin or kurs_eur is None:
         return jsonify({'error': 'Fehlende Daten'}), 400
 
     session = Session()
-    eintraege = session.query(PortfolioEintrag).filter_by(coin=coin).all()
+    eintraege = (
+        session.query(PortfolioEintrag)
+        .filter_by(coin=coin, user_id=current_user.id)
+        .all()
+    )
+
     for eintrag in eintraege:
         eintrag.kurs_eur = kurs_eur
+
     session.commit()
     session.close()
     return jsonify({'status': 'ok'})
