@@ -9,28 +9,6 @@ Session = sessionmaker(bind=engine)
 
 # === MODELL-KLASSEN ===
 
-class PortfolioEintrag(Base):
-    __tablename__ = 'portfolio'
-    id = Column(Integer, primary_key=True)
-    coin = Column(String, nullable=False)
-    im_besitz = Column(Float, nullable=False)
-    durchschnittseinkaufspreis = Column(Float, nullable=False)
-    aktueller_wert = Column(Float)
-    gewinn_brutto = Column(Float)
-    kurs_eur = Column(Float)
-    kurs_usd = Column(Float)
-
-class KaufEintrag(Base):
-    __tablename__ = 'kaeufe'
-    id = Column(Integer, primary_key=True)
-    coin = Column(String, nullable=False)
-    anzahl = Column(Float, nullable=False)
-    preis = Column(Float, nullable=False)
-    kaufdatum = Column(Date, nullable=False)
-    differenz = Column(Float, nullable=True) 
-    kommentar = Column(String, nullable=True) 
-    rest_anzahl = Column(Float, nullable=True)  # Neue Spalte hier
-
 class User(UserMixin, Base):
     __tablename__ = "user"
     id = Column(Integer, primary_key=True)
@@ -61,3 +39,24 @@ class Role(Base):
         secondary=User.user_roles,  # oder: 'user_roles' falls global definiert
         back_populates="roles"
     )
+class PortfolioEintrag(Base):
+    __tablename__ = 'portfolio'
+    id = Column(Integer, primary_key=True)
+    coin = Column(String, nullable=False)
+    im_besitz = Column(Float, nullable=False)
+    durchschnittseinkaufspreis = Column(Float, nullable=False)
+    aktueller_wert = Column(Float)
+    gewinn_brutto = Column(Float)
+    kurs_eur = Column(Float)
+    kurs_usd = Column(Float)
+
+class KaufEintrag(Base):
+    __tablename__ = 'kaeufe'
+    id = Column(Integer, primary_key=True)
+    coin = Column(String, nullable=False)
+    anzahl = Column(Float, nullable=False)
+    preis = Column(Float, nullable=False)
+    kaufdatum = Column(Date, nullable=False)
+    differenz = Column(Float, nullable=True) 
+    kommentar = Column(String, nullable=True) 
+    rest_anzahl = Column(Float, nullable=True)  # Neue Spalte hier
