@@ -138,11 +138,10 @@ $(function () {
 
 });
 
-async function saveSellBtnClick (event) {
+async function saveSellBtnClick(event) {
   event.preventDefault();
 
   const sellForm = event.target.parentElement;
-
   if (!sellForm) return;
 
   const daten = {
@@ -154,6 +153,36 @@ async function saveSellBtnClick (event) {
   };
 
   try {
+    // Schritt 1: API-Aufruf zur Steuerprüfung
+    const checkRes = await fetch("/api/verkauf/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(daten),
+    });
+
+    const checkJson = await checkRes.json();
+
+    if (!checkRes.ok || !checkJson.moeglich) {
+      alert("❌ Verkauf nicht möglich: " + (checkJson.fehler || "Unbekannter Fehler"));
+      return;
+    }
+
+    // Schritt 2: Prüfen auf steuerpflichtige Anteile
+    if (checkJson.steuerpflichtig > 0) {
+      const msg = `⚠️ Du möchtest ${checkJson.gesamt_menge} ${daten.coin} verkaufen.\n` +
+                  `Davon sind ${checkJson.steuerfrei} steuerfrei und ${checkJson.steuerpflichtig} steuerpflichtig.\n\n` +
+                  `⚠️ Für den steuerpflichtigen Anteil könnten Steuern anfallen.\n\n` +
+                  `Gib "ja" oder "y" ein, um fortzufahren. Alles andere bricht ab.`;
+
+      const eingabe = prompt(msg);
+
+      if (!eingabe || !["ja", "Ja", "JA", "y", "Y", "yes", "YES"].includes(eingabe.trim())) {
+        alert("❌ Verkauf abgebrochen – steuerpflichtiger Anteil nicht bestätigt.");
+        return;
+      }
+    }
+
+    // Schritt 3: Tatsächlicher Verkaufs-POST
     const res = await fetch("/api/verkauf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -161,31 +190,55 @@ async function saveSellBtnClick (event) {
     });
 
     const text = await res.text();
-    console.log("Status:", res.status);
-    console.log("Response Text:", text);
-
     if (!res.ok) throw new Error(`Server Fehler: ${text}`);
 
-    try {
-      const json = JSON.parse(text);
-      console.log("Response JSON:", json);
-
-      //if (json.differenz !== undefined) {
-      //  alert(`Verkauf gespeichert! Gewinn/Verlust: ${json.differenz.toFixed(2)} €`);
-      //}
-    } catch {
-      console.warn("Antwort kein JSON");
-    }
+    const json = JSON.parse(text);
+    console.log("✅ Verkauf abgeschlossen:", json);
 
     sellForm.reset();
     sellForm.style.display = "none";
 
-    await updatePortfolio(); // Nur Portfolio Tabelle aktualisieren, Käufe nicht
-    await updateKaeufe();    // *** Käufe Tabelle aktualisieren ***
+    await updatePortfolio();
+    await updateKaeufe();
 
   } catch (error) {
     alert("❌ Fehler beim Verkauf: " + error.message);
   }
+}
+
+
+function zeigeSteuerwarnung(steuerfrei, steuerpflichtig) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("steuerwarnungModal");
+    const text = document.getElementById("steuerwarnungText");
+    const confirmBtn = document.getElementById("confirmTaxableSaleBtn");
+    const cancelBtn = document.getElementById("cancelTaxableSaleBtn");
+
+    text.textContent = `Du möchtest ${steuerfrei + steuerpflichtig} Coins verkaufen.
+Davon sind ${steuerfrei} steuerfrei und ${steuerpflichtig} steuerpflichtig.
+Willst du trotzdem fortfahren?`;
+
+    modal.style.display = "block";
+
+    const cleanup = () => {
+      modal.style.display = "none";
+      confirmBtn.removeEventListener("click", onConfirm);
+      cancelBtn.removeEventListener("click", onCancel);
+    };
+
+    const onConfirm = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    const onCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    confirmBtn.addEventListener("click", onConfirm);
+    cancelBtn.addEventListener("click", onCancel);
+  });
 }
 
 

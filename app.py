@@ -434,6 +434,62 @@ def berechne_durchschnittspreis(session, user_id, coin):
     gesamt_kosten = sum(k.rest_anzahl * k.preis for k in offene_kaeufe)
     return gesamt_kosten / gesamt_menge
 
+@app.route('/api/verkauf/check', methods=['POST'])
+@login_required
+def check_verkauf():
+    session = Session()
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Keine Daten empfangen'}), 400
+
+    try:
+        coin = data.get('coin')
+        anzahl = float(data.get('anzahl'))
+        verkaufsdatum = datetime.strptime(data.get('verkaufsdatum'), '%Y-%m-%d').date()
+
+        if not all([coin, anzahl, verkaufsdatum]):
+            return jsonify({'error': 'Ungültige Eingabedaten'}), 400
+
+        offene_kaeufe = lade_offene_kaeufe(session, coin)
+        offene_kaeufe = [k for k in offene_kaeufe if k.user_id == current_user.id]
+        offene_kaeufe.sort(key=lambda k: k.kaufdatum)
+
+        steuerfrei_menge = 0.0
+        steuerpflichtig_menge = 0.0
+        verbleibend = anzahl
+
+        for kauf in offene_kaeufe:
+            kauf_rest = kauf.rest_anzahl if kauf.rest_anzahl is not None else kauf.anzahl
+            wenn_frei = (verkaufsdatum - kauf.kaufdatum).days >= 365
+
+            verwendung = min(verbleibend, kauf_rest)
+            if verwendung <= 0:
+                continue
+
+            if wenn_frei:
+                steuerfrei_menge += verwendung
+            else:
+                steuerpflichtig_menge += verwendung
+
+            verbleibend -= verwendung
+            if verbleibend <= 0:
+                break
+
+        if verbleibend > 0:
+            return jsonify({'moeglich': False, 'fehler': 'Nicht genügend Coins vorhanden'}), 400
+
+        return jsonify({
+            'moeglich': True,
+            'gesamt_menge': anzahl,
+            'steuerfrei': steuerfrei_menge,
+            'steuerpflichtig': steuerpflichtig_menge
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        session.close()
+
 
 @app.route('/api/verkauf', methods=['POST'])
 @login_required
