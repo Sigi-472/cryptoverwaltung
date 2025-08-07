@@ -71,12 +71,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from sqlalchemy.orm.exc import NoResultFound, DetachedInstanceError
 from db_defs import *
-from startseite_blueprint import neue_startseite
+from startseite_blueprint import startseite_blueprint
 
 app = Flask(__name__)
 CORS(app)  # Cross-Origin-Freigabe
 
-app.register_blueprint(neue_startseite)
+app.register_blueprint(startseite_blueprint)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
